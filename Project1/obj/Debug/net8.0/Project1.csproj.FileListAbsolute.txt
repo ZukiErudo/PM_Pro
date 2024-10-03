@@ -12,3 +12,4 @@ C:\Users\PC\source\repos\Project1\Project1\obj\Debug\net8.0\refint\Project1.dll
 C:\Users\PC\source\repos\Project1\Project1\obj\Debug\net8.0\Project1.pdb
 C:\Users\PC\source\repos\Project1\Project1\obj\Debug\net8.0\Project1.genruntimeconfig.cache
 C:\Users\PC\source\repos\Project1\Project1\obj\Debug\net8.0\ref\Project1.dll
+C:\Users\PC\source\repos\Project1\Project1\obj\Debug\net8.0\Project1.sourcelink.json

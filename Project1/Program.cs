@@ -97,6 +97,7 @@ namespace C__Project_1
     {
         public Task RootTask;
         public int latestLevelOneTaskID = 0;
+        public CPMDiGraph graph = new CPMDiGraph();
 
         public Dictionary<string, string> TaskNameandIDDic = new Dictionary<string, string>(); //TaskName - ID
         public Dictionary<string, TaskIDandSubtasksID> TaskIDandSubTaskIDDic = new Dictionary<string, TaskIDandSubtasksID>();
@@ -130,6 +131,8 @@ namespace C__Project_1
 
                 TaskIDandSubTaskIDDic["0"].latestPositionID++;
                 TaskIDandSubTaskIDDic["0"].SubTaskIDS.Add(latestLevelOneTaskID.ToString());
+
+                graph.AddVertex(TaskName);
             }
         }
 
@@ -161,6 +164,13 @@ namespace C__Project_1
                 subTask.TaskNodeLevelInTree = Task.TaskNodeLevelInTree + 1;
 
                 Task.SubTasks.Add(subTaskNameID, subTask);
+
+                if(graph.vertices.ContainsKey(TaskName))
+                {
+                    graph.RemoveVertex(TaskName);
+                }
+
+                graph.AddVertex(subTaskName);
             }
         }
 
@@ -174,10 +184,208 @@ namespace C__Project_1
                 return;
             }
 
+            Task? DependingTaskNode = FindTaskNode(DependingTaskName);
+            Task? TaskNode = FindTaskNode(TaskName);
+
+            if(DependingTaskNode == null || TaskNode == null) return;
+
+            bool dependingTaskHasTimeline = DependingTaskNode.StartDate != DateTime.MinValue ? true : false;
+            bool TaskHasTimeline = TaskNode.StartDate != DateTime.MinValue ? true : false;
+
+            List<string> dependingLeafTasks = new List<string>();
+            List<string> leafTasks = new List<string>();
+
+            if(!DependingTaskNode.IsLeafNode)
+            {
+                if(dependingTaskHasTimeline)
+                {
+                    dependingLeafTasks = ListOfTasksEarliestOrLatestDates(DependingTaskName, Type[0].ToString(), true);
+                }
+                else
+                {
+                    dependingLeafTasks = LeafTasksOf(DependingTaskName);
+                }
+            }
+            else
+            {
+                dependingLeafTasks.Add(DependingTaskName);
+            }
+
+            if (!TaskNode.IsLeafNode)
+            {
+                if (TaskHasTimeline)
+                {
+                    leafTasks = ListOfTasksEarliestOrLatestDates(TaskName, Type[1].ToString(), true);
+                }
+                else
+                {
+                    leafTasks = LeafTasksOf(TaskName);
+                }
+            }
+            else
+            {
+                leafTasks.Add(TaskName);
+            }
+
+            if(dependingTaskHasTimeline && TaskHasTimeline)
+            {
+                if(CheckTimelineConstraintsbetweenTasks(dependingLeafTasks, leafTasks, Type))
+                {
+                    Console.WriteLine("Please change timeline!");
+                    return;
+                }
+            }
+
+            AddDependenciesBetweenLeafTasksIntoGraph(dependingLeafTasks, leafTasks);
+
+            if(graph.CheckingLoop() == true)
+            {
+                Console.WriteLine("Loop found!");
+
+                foreach(string dependingTask in dependingLeafTasks)
+                {
+                    foreach(string tsk in leafTasks)
+                    {
+                        if(graph.CheckIfEdgeExists(dependingTask, tsk))
+                        {
+                            graph.RemoveEdge(dependingTask, tsk);
+                        }
+                    }
+                }
+
+                return;
+            }
+
 
         }
 
-        public List<string>? ListOfTaskEarliestOrLatestDates(string TaskName, string Type)
+        public bool CheckTimelineConstraintsbetweenTasks(List<string>? DependingList, List<string>? List, string Type)
+        {
+            bool check = false;
+
+            if (DependingList == null || List == null)
+            {
+                Console.WriteLine("Null Error!");
+                return false;
+            }
+
+            if (Type == "SS")
+            {
+                foreach(string DependingTask in DependingList)
+                {
+                    Task? DependingNode = FindTaskNode(DependingTask);
+
+                    foreach(string Task in List)
+                    {
+                        Task? TaskNode = FindTaskNode(Task);
+
+                        if(DateTime.Compare(TaskNode.StartDate, DependingNode.StartDate) < 0)
+                        {
+                            check = true; 
+                            break;
+                        }
+                    }
+
+                    if(check == true)
+                    {
+                        break;
+                    }
+                }
+            }
+            else if(Type == "FF")
+            {
+                foreach (string DependingTask in DependingList)
+                {
+                    Task? DependingNode = FindTaskNode(DependingTask);
+
+                    foreach (string Task in List)
+                    {
+                        Task? TaskNode = FindTaskNode(Task);
+
+                        if (DateTime.Compare(TaskNode.DueDate, DependingNode.DueDate) < 0)
+                        {
+                            check = true;
+                            break;
+                        }
+                    }
+
+                    if (check == true)
+                    {
+                        break;
+                    }
+                }
+            }
+            else if(Type == "FS")
+            {
+                foreach (string DependingTask in DependingList)
+                {
+                    Task? DependingNode = FindTaskNode(DependingTask);
+
+                    foreach (string Task in List)
+                    {
+                        Task? TaskNode = FindTaskNode(Task);
+
+                        if (DateTime.Compare(TaskNode.StartDate, DependingNode.DueDate) < 0)
+                        {
+                            check = true;
+                            break;
+                        }
+                    }
+
+                    if (check == true)
+                    {
+                        break;
+                    }
+                }
+            }
+            else if(Type == "SF")
+            {
+                foreach (string DependingTask in DependingList)
+                {
+                    Task? DependingNode = FindTaskNode(DependingTask);
+
+                    foreach (string Task in List)
+                    {
+                        Task? TaskNode = FindTaskNode(Task);
+
+                        if (DateTime.Compare(TaskNode.DueDate, DependingNode.StartDate) < 0)
+                        {
+                            check = true;
+                            break;
+                        }
+                    }
+
+                    if (check == true)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return check;
+        }
+
+        public void AddDependenciesBetweenLeafTasksIntoGraph(List<string>? DependingList, List<string>? List) //not yy, experiment
+        {
+            if(DependingList == null || List == null)
+            {
+                Console.WriteLine("Null Error!");
+                return;
+            }
+
+            foreach(string dependingTask in DependingList)
+            {
+                foreach(string Task in List)
+                {
+                    if(!graph.CheckIfEdgeExists(dependingTask, Task))
+                    {
+                        graph.AddEdge(dependingTask, Task);
+                    }
+                }
+            }
+        }
+
+        public List<string>? ListOfTasksEarliestOrLatestDates(string TaskName, string Type, bool onlyLeafTasks) //with parents
         {
             List<string>? leafTasks = LeafTasksOf(TaskName);
 
@@ -229,9 +437,8 @@ namespace C__Project_1
 
             List<string> processedTasks = new List<string>();
 
-            while (tasksQueue.Count > 0)
+            while (tasksQueue.Count > 0 && !onlyLeafTasks)
             {
-                
                 string taskInQueue = tasksQueue.Dequeue();
                 listOfTasks.Add(taskInQueue);
 
@@ -244,6 +451,32 @@ namespace C__Project_1
             }
 
             return listOfTasks;
+        }
+
+        public List<string>? AllSubtasksOf(string TaskName)
+        {
+            Queue<string> tasksQueue = new Queue<string>();
+            List<string> subtasks = new List<string>();
+
+            tasksQueue.Enqueue(TaskName);
+
+            while (tasksQueue.Count > 0)
+            {
+                string task = tasksQueue.Dequeue();
+
+                Task? TaskNode = FindTaskNode(task);
+
+                if (TaskNode == null) return null;
+
+                subtasks.Add(task);
+
+                foreach (KeyValuePair<string, Task> subtask in TaskNode.SubTasks)
+                {
+                    tasksQueue.Enqueue(subtask.Key);
+                }
+            }
+
+            return subtasks;
         }
 
         public List<string>? LeafTasksOf(string TaskName)
@@ -409,6 +642,95 @@ namespace C__Project_1
         {
             if (AlreadyHaveThisTask(TaskName)) return TaskNameandIDDic[TaskName];
             else return "";
+        }
+    }
+
+    class Vertex
+    {
+        public string TasKName;
+        public int Duration;
+        public int Float;
+        public List<string> Depended_vertices = new List<string>();
+
+        public Vertex(string name)
+        {
+            TasKName = name;
+        }
+    }
+
+    class CPMDiGraph
+    {
+        public Dictionary<string, Vertex> vertices = new Dictionary<string, Vertex>();
+
+        public CPMDiGraph() { }
+
+        public void AddVertex(string TaskName)
+        {
+            vertices.Add(TaskName, new Vertex(TaskName));
+        }
+
+        public void RemoveVertex(string TaskName) 
+        {
+            vertices.Remove(TaskName);
+
+            foreach(KeyValuePair<string, Vertex> vertex in vertices)
+            {
+                if(vertex.Value.Depended_vertices.Contains(TaskName))
+                {
+                    vertex.Value.Depended_vertices.Remove(TaskName);
+                }
+            }
+        }
+
+        public void AddEdge(string v1, string v2)
+        {
+            vertices[v1].Depended_vertices.Add(v2);
+        }
+
+        public void RemoveEdge(string v1, string v2)
+        {
+            vertices[v1].Depended_vertices.Remove(v2);
+        }
+
+        public bool CheckIfEdgeExists(string v1, string v2)
+        {
+            return vertices[v1].Depended_vertices.Contains(v2);
+        }
+
+        public bool CheckingLoop()
+        {
+            bool check = false;
+
+            Queue<string> vertexQueue = new Queue<string>();
+            List<string> visitedVertex = new List<string>();
+
+            foreach(KeyValuePair<string, Vertex> vertex in vertices)
+            {
+                vertexQueue.Enqueue(vertex.Key);
+            }
+
+            while(vertexQueue.Count > 0)
+            {
+                string vertex = vertexQueue.Dequeue();
+
+                visitedVertex.Add(vertex);
+
+                foreach(string neighbor in vertices[vertex].Depended_vertices)
+                {
+                    if(visitedVertex.Contains(neighbor))
+                    {
+                        check = true;   
+                        break;
+                    }
+                }
+
+                if(check == true)
+                {
+                    break;
+                }
+            }
+
+            return check;
         }
     }
 
