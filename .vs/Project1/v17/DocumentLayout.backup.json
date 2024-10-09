@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\PC\\source\\repos\\Project1\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4C9AADFE-13B9-4146-A81C-FACFF37B6978}|Project1\\Project1.csproj|c:\\users\\pc\\source\\repos\\project1\\project1\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4C9AADFE-13B9-4146-A81C-FACFF37B6978}|Project1\\Project1.csproj|solutionrelative:project1\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4C9AADFE-13B9-4146-A81C-FACFF37B6978}|Project1\\Project1.csproj|c:\\users\\pc\\source\\repos\\project1\\project1\\pj.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4C9AADFE-13B9-4146-A81C-FACFF37B6978}|Project1\\Project1.csproj|solutionrelative:project1\\pj.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -27,14 +27,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\PC\\source\\repos\\Project1\\Project1\\Program.cs",
-              "RelativeDocumentMoniker": "Project1\\Program.cs",
-              "ToolTip": "C:\\Users\\PC\\source\\repos\\Project1\\Project1\\Program.cs",
-              "RelativeToolTip": "Project1\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIYAAAAAAAAAAAAAAA==",
+              "Title": "PJ.cs",
+              "DocumentMoniker": "C:\\Users\\PC\\source\\repos\\Project1\\Project1\\PJ.cs",
+              "RelativeDocumentMoniker": "Project1\\PJ.cs",
+              "ToolTip": "C:\\Users\\PC\\source\\repos\\Project1\\Project1\\PJ.cs*",
+              "RelativeToolTip": "Project1\\PJ.cs*",
+              "ViewState": "AgIAAHsCAAAAAAAAAAAywOICAABXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-01T03:00:45.166Z",
+              "WhenOpened": "2024-10-08T06:50:20.249Z",
               "EditorCaption": ""
             }
           ]

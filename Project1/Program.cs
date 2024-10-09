@@ -256,8 +256,35 @@ namespace C__Project_1
                 return;
             }
 
+            List<string> dependingList = new List<string>();
+            List<string> dependedList = new List<string>();
+
+            dependingList.Add(DependingTaskName);
+            dependedList.Add(TaskName);
+
+            List<string> allSubtasksOfDependingTask = AllSubtasksOf(DependingTaskName);
+            List<string> allSubtasksOfTask = AllSubtasksOf(TaskName);
+            
+            foreach(string tsk in allSubtasksOfDependingTask)
+            {
+                dependingList.Add(tsk);
+            }
+
+            foreach(string tsk in allSubtasksOfTask)
+            {
+                dependedList.Add(tsk);
+            }
+
+            if(CheckTimelineConstraintsbetweenTasks(dependingList, dependedList, Type))
+            {
+                Console.WriteLine("Timeline setting error!");
+                return;
+            }
+
 
         }
+
+
 
         public bool CheckTimelineConstraintsbetweenTasks(List<string>? DependingList, List<string>? List, string Type)
         {
