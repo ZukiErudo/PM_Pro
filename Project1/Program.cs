@@ -7,8 +7,8 @@ namespace C__Project_1
     class TaskIDandSubtasksID
     {
         public string TaskID;
-        public int latestPositionID = 0;
-        public List<string> SubTaskIDS = new List<string>();
+        public int latestPositionID = 0; 
+        public List<string> SubTaskIDS = new List<string>(); //danh sach id cua cong viec con
 
         public TaskIDandSubtasksID(string ID)
         {
@@ -21,7 +21,7 @@ namespace C__Project_1
         public string TaskID;
         public string TaskName;
         public List<string> Desription = new List<string>();
-        public string Priority = "";
+        public string Priority = "";// Cho nguoi dung biet muc do uu tien cua cong viec
 
         public Task(string taskID, string taskName)
         {
@@ -29,31 +29,31 @@ namespace C__Project_1
             TaskName = taskName;
         }
 
-        public int TaskNodeLevelInTree;
-        public int TaskFloat;
+        public int TaskNodeLevelInTree; //co the dung hoac ko
+        public int TaskFloat; //Thoi gian tri hoan tuong ung cong viec (ma khong anh huong len toan bo project)
+        
+        public DateTime StartDate = DateTime.MinValue; //Ngay bat dau (Min Value chi viec StartDate chua duoc gan gia tri ngay cu the)
+        public DateTime EndDate = DateTime.MinValue; //Ngay ket thuc (Min Value chi viec DueDate chua duoc gan gia tri ngay cu the)
+        public int Duration = 1; //Thoi han hoan thanh cong viec (mac dinh 1 ngay)
+        public int TimeBudget; //In hours; Thoi gian gioi han cong viec duoc phep thuc hien
 
-        public DateTime StartDate = DateTime.MinValue;
-        public DateTime EndDate = DateTime.MinValue;
-        public int Duration = 1;
-        public int TimeBudget; //In hours
+        public string Status = ""; //Trang thai cua cong viec: chua bat dau -> dang thuc hien -> da hoan thanh hoac da bi huy bo
+        public int PercentageCompleted = 0; //(For non-leaf node only?) Tien do hoan thanh cong viec (xac dinh bang phan tram)
 
-        public string Status = "";
-        public int PercentageCompleted = 0; //For non-leaf node only?
+        public bool IsLeafNode = true; //Xac dinh xem nut co phai la khong
+        public bool OnCriticalPath = false; //Cho biet xem cong viec nao day co duoc phep hoan hay khong
 
-        public bool IsLeafNode = true;
-        public bool OnCriticalPath = false;
+        public List<string> AssignedTeamMembers = new List<string>(); //Danh sach thanh vien duoc phan cong mot cong viec cu the
 
-        public List<string> AssignedTeamMembers = new List<string>();
-
-        public Task? ParentTask;
-        public Dictionary<string, Task> SubTasks = new Dictionary<string, Task>();
+        public Task? ParentTask; //Con tro chi vao cong viec nam tren nut cha
+        public Dictionary<string, Task> SubTasks = new Dictionary<string, Task>(); //Tu dien chua danh sach cong viec con (cua 1 cong viec cu the). Key: ID cong viec; Value: Cong viec (con)
     }
 
     class TypeLeadLag
     {
-        public string Type;
-        public int Lead = 0;
-        public int Lag = 0;
+        public string Type; // Dang phu thuoc: S - S; F - F; F - S; S - F
+        public int Lead = 0; // - Delta phu thuoc cong viec giua 2 cong viec cu the (khac nhau)
+        public int Lag = 0; // Delta phu thuoc cong viec giua 2 cong viec cu the (khac nhau)
 
         public TypeLeadLag(string type)
         {
@@ -61,6 +61,9 @@ namespace C__Project_1
         }
     }
 
+    // Summary:
+    // Lop luu tru thong tin cua phu thuoc (cua 1 cong viec) bao gom:
+    // Ten cong viec; Tu dien chua dang phu thuoc, delta thoi gian chenh lech cua 2 cong viec. Key: Ten Cong viec. Value: TLL
     class DependencyTaskInfo
     {
         public string TaskName;
@@ -74,19 +77,19 @@ namespace C__Project_1
 
     class TreeOfTasks
     {
-        public Task RootTask;
+        public Task RootTask; // La cong viec lon nhat hay chinh Project. Chua ten Project; La con tro chi toi moi nut con cua no (hay cong viec thuoc Project)
         public int latestLevelOneTaskID = 0;
-        public bool automaticScheduling = true;
-        public CPMDiGraph graph = new CPMDiGraph();
+        public bool automaticScheduling = true; // Dung de tu dong dieu chinh timeline Project sao cho hop ly nhat. 
+        public CPMDiGraph graph = new CPMDiGraph(); // La cai do thi
 
-        public Dictionary<string, string> TaskNameandIDDic = new Dictionary<string, string>(); //TaskName - ID
-        public Dictionary<string, TaskIDandSubtasksID> TaskIDandSubTaskIDDic = new Dictionary<string, TaskIDandSubtasksID>();
-        public Dictionary<string, DependencyTaskInfo> Dependencies = new Dictionary<string, DependencyTaskInfo>();
+        public Dictionary<string, string> TaskNameandIDDic = new Dictionary<string, string>(); //TaskName - ID. Tu dien luu tru cong viec va ID cua cong viec (A).
+                                                                                               //Key: Ten cong viec A. Value: ID cong viec A
+        public Dictionary<string, TaskIDandSubtasksID> TaskIDandSubTaskIDDic = new Dictionary<string, TaskIDandSubtasksID>(); //
+        public Dictionary<string, DependencyTaskInfo> Dependencies = new Dictionary<string, DependencyTaskInfo>();  //
 
         public TreeOfTasks(string ProjectName)
         {
             RootTask = new Task("0", ProjectName);
-            RootTask.TaskID = "0";
             RootTask.IsLeafNode = false;
 
             TaskNameandIDDic.Add(ProjectName, "0");
@@ -614,7 +617,9 @@ namespace C__Project_1
         public string TasKName;
         public int Duration;
         public int Float;
-        public Dictionary<string, string> Depended_vertices = new Dictionary<string, string>(); //Task - Type
+        public Dictionary<string, string> Depended_vertices = new Dictionary<string, string>(); //Task - Type. Tu dien luu tru cong viec phu thuoc vao 1 cong viec (A) cu the khac.
+                                                                                                //Key: Ten cong viec A; Value: Cac cong viec phu thuoc
+
 
         public Vertex(string name)
         {
@@ -622,9 +627,12 @@ namespace C__Project_1
         }
     }
 
+    // Summary
+    // CPMDiGraph: Kiem tra vong lap (phu thuoc cong viec)
+
     class CPMDiGraph
     {
-        public Dictionary<string, Vertex> vertices = new Dictionary<string, Vertex>();
+        public Dictionary<string, Vertex> vertices = new Dictionary<string, Vertex>(); //
 
         public CPMDiGraph() { }
 
@@ -730,14 +738,10 @@ namespace C__Project_1
 
             tree.AddDependency("B", "A", "FS");
             tree.AddDependency("B", "C", "SS");
-            //tree.AddDependency("B", "A", "FS");
             tree.AddDependency("D", "B", "FS");
             tree.AddDependency("D", "E", "FF");
 
             tree.AddDependency("B", "C", "FS");
-
-            //tree.SetTimeline("B", new DateTime(2024, 10, 11), new DateTime(2024, 10, 13));
-            //tree.SetTimeline("D", new DateTime(2024, 10, 14), new DateTime(2024, 10, 15));
 
             Task? A = tree.FindTaskNode("A");
             Task? B = tree.FindTaskNode("B");

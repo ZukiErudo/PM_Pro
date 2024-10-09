@@ -35,7 +35,6 @@ namespace C__Project_1
         public DateTime StartDate = DateTime.MinValue;
         public DateTime EndDate = DateTime.MinValue;
         public int Duration = 1;
-        public bool FirstTimeDuration = true;
         public int TimeBudget; //In hours
 
         public string Status = "";
@@ -113,12 +112,6 @@ namespace C__Project_1
 
                 TaskIDandSubTaskIDDic["0"].latestPositionID++;
                 TaskIDandSubTaskIDDic["0"].SubTaskIDS.Add(latestLevelOneTaskID.ToString());
-
-                if (RootTask.FirstTimeDuration)
-                {
-                    RootTask.Duration = 0;
-                    RootTask.FirstTimeDuration = false;
-                }
             }
         }
 
@@ -154,12 +147,6 @@ namespace C__Project_1
                 subTask.TaskNodeLevelInTree = Task.TaskNodeLevelInTree + 1;
 
                 Task.SubTasks.Add(subTaskNameID, subTask);
-
-                if (Task.FirstTimeDuration)
-                {
-                    Task.Duration = 0;
-                    Task.FirstTimeDuration = false;
-                }
             }
         }
 
@@ -282,17 +269,24 @@ namespace C__Project_1
             }
         }
 
+        public void SetTimelineForTask(string TaskName, DateTime newStart, DateTime newEnd)
+        {
+            Task? Task = FindTaskNode(TaskName);
+
+            if (Task == null) return;
+            else if (Task.SubTasks.Count > 0 && automaticScheduling)
+            {
+                Console.WriteLine("Auto Scheduling mode is on. You cannot change the timeline of summary task.");
+                return;
+            }
+            else SetTimeline(TaskName, newStart, newEnd);
+        }
+
         public void SetTimeline(string TaskName, DateTime newStart, DateTime newEnd)
         {
             Task? Task = FindTaskNode(TaskName);
             TimeSpan span = newEnd - newStart;
-
             if (Task == null) return;
-            if(Task.ParentTask != null && AlreadySettingTimeline(Task.ParentTask.TaskName) && span.Days + 1 > Task.ParentTask.Duration)
-            {
-                Console.WriteLine($"The duration of {TaskName} ({span.Days + 1}) is longer than of {Task.ParentTask.TaskName} ({Task.ParentTask.Duration})");
-                return;
-            }
 
             if (Dependencies.ContainsKey(TaskName))
             {
@@ -328,9 +322,9 @@ namespace C__Project_1
                             SetTimeline(depending.Key, newEnd, newEnd.AddDays(dependingTask.Duration - 1));
                         }
                     }
-                }                
+                }
             }
-            
+
             Task.StartDate = newStart;
             Task.EndDate = newEnd;
             Task.Duration = span.Days + 1;
@@ -347,7 +341,7 @@ namespace C__Project_1
                         {
                             SetTimeline(depended.Key, newStart, newStart.AddDays(dependedTask.Duration - 1));
                         }
-                        else if(DateTime.Compare(dependedTask.StartDate, newStart) < 0)
+                        else if (DateTime.Compare(dependedTask.StartDate, newStart) < 0)
                         {
                             SetTimeline(depended.Key, newStart, newStart.AddDays(dependedTask.Duration - 1));
                         }
@@ -358,7 +352,7 @@ namespace C__Project_1
                         {
                             SetTimeline(depended.Key, newEnd.AddDays(-dependedTask.Duration + 1), newEnd);
                         }
-                        else if(DateTime.Compare(dependedTask.EndDate, newEnd) < 0)
+                        else if (DateTime.Compare(dependedTask.EndDate, newEnd) < 0)
                         {
                             SetTimeline(depended.Key, newEnd.AddDays(-dependedTask.Duration + 1), newEnd);
                         }
@@ -369,7 +363,7 @@ namespace C__Project_1
                         {
                             SetTimeline(depended.Key, newEnd.AddDays(1), newEnd.AddDays(1 + dependedTask.Duration - 1));
                         }
-                        else if(DateTime.Compare(dependedTask.StartDate, newEnd) <= 0)
+                        else if (DateTime.Compare(dependedTask.StartDate, newEnd) <= 0)
                         {
                             SetTimeline(depended.Key, newEnd.AddDays(1), newEnd.AddDays(1 + dependedTask.Duration - 1));
                         }
@@ -380,7 +374,7 @@ namespace C__Project_1
                         {
                             SetTimeline(depended.Key, newStart.AddDays(-dependedTask.Duration + 1), newStart);
                         }
-                        else if(DateTime.Compare(dependedTask.EndDate, newStart) < 0)
+                        else if (DateTime.Compare(dependedTask.EndDate, newStart) < 0)
                         {
                             SetTimeline(depended.Key, newStart.AddDays(-dependedTask.Duration + 1), newStart);
                         }
@@ -388,35 +382,30 @@ namespace C__Project_1
                 }
             }
 
-            if (Task.ParentTask != null && AlreadySettingTimeline(Task.ParentTask.TaskName))
-            {               
-                if(DateTime.Compare(Task.StartDate, Task.ParentTask.StartDate) < 0)
-                {
-                    SetTimeline(Task.ParentTask.TaskName, Task.StartDate, Task.StartDate.AddDays(Task.ParentTask.Duration - 1));
-                }
-
-                if(DateTime.Compare(Task.EndDate, Task.ParentTask.EndDate) > 0)
-                {
-                    SetTimeline(Task.ParentTask.TaskName, Task.EndDate.AddDays(-Task.ParentTask.Duration + 1), Task.EndDate);
-                }
-            }
-
-            foreach (KeyValuePair<string, Task> subtask in Task.SubTasks)
+            if (Task.ParentTask != null)
             {
-                if (AlreadySettingTimeline(subtask.Value.TaskName))
+                List<DateTime> listOfSubtaskStartDates = new List<DateTime>();
+                List<DateTime> listOfSubtaskEndDates = new List<DateTime>();
+
+                foreach (KeyValuePair<string, Task> subTask in Task.ParentTask.SubTasks)
                 {
-                    Task? SubtaskNode = FindTaskNode(subtask.Value.TaskName);
-
-                    if (DateTime.Compare(SubtaskNode.StartDate, Task.StartDate) < 0)
+                    if (AlreadySettingTimeline(subTask.Value.TaskName))
                     {
-                        SetTimeline(subtask.Value.TaskName, Task.StartDate, Task.StartDate.AddDays(SubtaskNode.Duration - 1));
-                    }
-
-                    if (DateTime.Compare(SubtaskNode.EndDate, Task.EndDate) > 0)
-                    {
-                        SetTimeline(subtask.Value.TaskName, Task.EndDate.AddDays(-SubtaskNode.Duration + 1), Task.EndDate);
+                        listOfSubtaskStartDates.Add(subTask.Value.StartDate);
                     }
                 }
+
+                foreach (KeyValuePair<string, Task> subTask in Task.ParentTask.SubTasks)
+                {
+                    if (AlreadySettingTimeline(subTask.Value.TaskName))
+                    {
+                        listOfSubtaskEndDates.Add(subTask.Value.EndDate);
+                    }
+                }
+
+                DateTime EarliestDate = EarliestDateTime(listOfSubtaskStartDates);
+                DateTime LatestDate = LatestDateTime(listOfSubtaskEndDates);
+                SetTimeline(Task.ParentTask.TaskName, EarliestDate, LatestDate);
             }
         }
 
@@ -733,11 +722,11 @@ namespace C__Project_1
             tree.AddTaskToRootTask("D");
             tree.AddTaskToRootTask("E");
 
-            tree.SetTimeline("A", new DateTime(2024, 10, 8), new DateTime(2024, 10, 10));
-            tree.SetTimeline("B", new DateTime(2024, 10, 11), new DateTime(2024, 10, 14));
-            tree.SetTimeline("C", new DateTime(2024, 10, 10), new DateTime(2024, 10, 14));
-            tree.SetTimeline("D", new DateTime(2024, 10, 14), new DateTime(2024, 10, 15));
-            tree.SetTimeline("E", new DateTime(2024, 10, 14), new DateTime(2024, 10, 14));
+            tree.SetTimelineForTask("A", new DateTime(2024, 10, 8), new DateTime(2024, 10, 10));
+            tree.SetTimelineForTask("B", new DateTime(2024, 10, 11), new DateTime(2024, 10, 14));
+            tree.SetTimelineForTask("C", new DateTime(2024, 10, 10), new DateTime(2024, 10, 14));
+            tree.SetTimelineForTask("D", new DateTime(2024, 10, 14), new DateTime(2024, 10, 15));
+            tree.SetTimelineForTask("E", new DateTime(2024, 10, 14), new DateTime(2024, 10, 14));
 
             tree.AddDependency("B", "A", "FS");
             tree.AddDependency("B", "C", "SS");
@@ -771,6 +760,10 @@ namespace C__Project_1
             Print($"{E.Duration}\n");
             Print($"{E.StartDate}\n");
             Print($"{E.EndDate}\n");
+
+            Print($"\n\n\n{tree.RootTask.Duration}\n");
+            Print($"{tree.RootTask.StartDate}\n");
+            Print($"{tree.RootTask.EndDate}\n");
         }
 
         static void Print(string text)
