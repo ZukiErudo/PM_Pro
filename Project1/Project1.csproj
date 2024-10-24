@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Program.cs" />
+    <Compile Remove="Input process.cs" />
+    <Compile Remove="PJ.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Program.cs" />
+    <None Include="Input process.cs" />
+    <None Include="PJ.cs" />
   </ItemGroup>
 
 </Project>
