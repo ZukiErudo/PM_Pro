@@ -7,6 +7,236 @@ using System.Transactions;
 
 namespace C__Project_1
 {
+    abstract class Resource
+    {
+        public string ResourceName = "";
+        public float StandardRate; //>= 0
+        public string Currency = "$"; //VND, Euro,...
+
+        protected Resource() { }
+
+        public abstract void PrintInfo();
+
+        public void Print(string text)
+        {
+            Console.Write(text);
+        }
+    }
+
+    class WorkResource : Resource
+    {
+        public float OvertimeRate; //>= 0
+
+        private const string RateUnit = "hour";
+        public float WorkingHoursPerDay; //>= 0 && <= 24
+        public float MaximumWorkingHoursPerDay = 24; //>= 0 && <= 24
+        public int AvailableCapacity = 1; //>= 1
+        public string Accrue = "Prorated"; //Start/Prorated/End
+
+        public WorkResource(string name)
+        {
+            ResourceName = name;
+        }
+
+        public override void PrintInfo()
+        {
+            Print($"Resource name: {ResourceName}\n");
+            Print($"Standard rate cost: {StandardRate} {Currency}/{RateUnit}\n");
+            Print($"Overtime rate cost: {OvertimeRate} {Currency}/{RateUnit}\n");
+            Print($"Working hours: {WorkingHoursPerDay} hours/day\n");
+            Print($"Maximum working hours: {MaximumWorkingHoursPerDay} hours/day\n");
+            Print($"Available capacity: {AvailableCapacity}\n");
+            Print($"Accrue type: {Accrue}\n");
+        }
+    }
+
+    class MaterialResource : Resource
+    {
+        public string RateUnit = "";
+
+        public MaterialResource(string name)
+        {
+            ResourceName = name;
+        }
+
+        public override void PrintInfo()
+        {
+            Print($"Resource name: {ResourceName}\n");
+            Print($"Standard rate cost: {StandardRate} {Currency}/{RateUnit}\n");
+        }
+    }
+
+    class ResourceManagement
+    {
+        public Dictionary<string, WorkResource> WorkResourceList = new Dictionary<string, WorkResource>();
+        public Dictionary<string, MaterialResource> MaterialResourceList = new Dictionary<string, MaterialResource>();
+
+        public ResourceManagement() { }
+
+        public void AddNewWorkResource(string name)
+        {
+            if (!CheckIfWorkResourceExists(name) && !CheckIfMaterialResourceExists(name))
+            {
+                WorkResourceList.Add(name, new WorkResource(name));
+            }
+        }
+
+        public void AddNewMaterialResource(string name)
+        {
+            if (!CheckIfMaterialResourceExists(name) && !CheckIfWorkResourceExists(name))
+            {
+                MaterialResourceList.Add(name, new MaterialResource(name));
+            }
+        }
+
+        public void ChangeWorkResourceName(string currentName, string newName)
+        {
+            if (CheckIfWorkResourceExists(currentName) && !CheckIfWorkResourceExists(newName))
+            {
+                WorkResourceList.Add(newName, WorkResourceList[currentName]);
+                WorkResourceList[newName].ResourceName = newName;
+                WorkResourceList.Remove(currentName);
+            }
+        }
+
+        public void ChangeMaterialResourceName(string currentName, string newName)
+        {
+            if (CheckIfMaterialResourceExists(currentName) && !CheckIfMaterialResourceExists(newName))
+            {
+                MaterialResourceList.Add(newName, MaterialResourceList[currentName]);
+                MaterialResourceList[newName].ResourceName = newName;
+                MaterialResourceList.Remove(currentName);
+            }
+        }
+
+        public void DeleteWorkResource(string name)
+        {
+            if (CheckIfWorkResourceExists(name))
+            {
+                WorkResourceList.Remove(name);
+            }
+        }
+
+        public void DeleteMaterialResource(string name)
+        {
+            if (CheckIfMaterialResourceExists(name))
+            {
+                MaterialResourceList.Remove(name);
+            }
+        }
+
+        public void SetStandardRateOfWorkResource(string name, float StdRate)
+        {
+            if (CheckIfWorkResourceExists(name) && StdRate >= 0)
+            {
+                WorkResourceList[name].StandardRate = StdRate;
+            }
+        }
+
+        public void SetStandardRateOfMaterialResource(string name, float StdRate)
+        {
+            if (CheckIfMaterialResourceExists(name) && StdRate >= 0)
+            {
+                MaterialResourceList[name].StandardRate = StdRate;
+            }
+        }
+
+        public void SetOvertimeRateOfWorkResource(string name, float OvertimeRate)
+        {
+            if (CheckIfWorkResourceExists(name) && OvertimeRate >= 0)
+            {
+                WorkResourceList[name].OvertimeRate = OvertimeRate;
+            }
+        }
+
+        public void SetCurrencyOfWorkResource(string name, string currency)
+        {
+            if (CheckIfWorkResourceExists(name))
+            {
+                WorkResourceList[name].Currency = currency;
+            }
+        }
+
+        public void SetCurrencyOfMaterialResource(string name, string currency)
+        {
+            if (CheckIfMaterialResourceExists(name))
+            {
+                MaterialResourceList[name].Currency = currency;
+            }
+        }
+
+        public void SetWorkingHoursPerDayOfWorkResource(string name, float hours)
+        {
+            if (CheckIfWorkResourceExists(name) && hours >= 0 && hours <= 24)
+            {
+                WorkResourceList[name].WorkingHoursPerDay = hours;
+            }
+        }
+
+        public void SetMaximumWorkingHoursPerDayOfWorkResource(string name, float hours)
+        {
+            if (CheckIfWorkResourceExists(name) && hours >= 0 && hours <= 24)
+            {
+                WorkResourceList[name].MaximumWorkingHoursPerDay = hours;
+            }
+        }
+
+        public void SetAvailableCapacityOfWorkResource(string name, int capacity)
+        {
+            if (CheckIfWorkResourceExists(name) && capacity >= 1)
+            {
+                WorkResourceList[name].AvailableCapacity = capacity;
+            }
+        }
+
+        public void SetRateUnitOfMaterialResource(string name, string RateUnit)
+        {
+            if (CheckIfMaterialResourceExists(name))
+            {
+                MaterialResourceList[name].RateUnit = RateUnit;
+            }
+        }
+
+        public void SetAccrueOfWorkResource(string name, string AccrueType)
+        {
+            if (CheckIfWorkResourceExists(name) && (AccrueType == "Start" || AccrueType == "Prorated" || AccrueType == "End"))
+            {
+                WorkResourceList[name].Accrue = AccrueType;
+            }
+        }
+
+        public bool CheckIfWorkResourceExists(string name)
+        {
+            return WorkResourceList.ContainsKey(name);
+        }
+
+        public bool CheckIfMaterialResourceExists(string name)
+        {
+            return MaterialResourceList.ContainsKey(name);
+        }
+
+        public void PrintInfoOfWorkResource(string name)
+        {
+            if (WorkResourceList.ContainsKey(name))
+            {
+                WorkResourceList[name].PrintInfo();
+            }
+        }
+
+        public void PrintInfoOfMaterialResource(string name)
+        {
+            if (MaterialResourceList.ContainsKey(name))
+            {
+                MaterialResourceList[name].PrintInfo();
+            }
+        }
+
+        private void Print(string text)
+        {
+            Console.Write(text);
+        }
+    }
+
     class TaskIDandSubtasksID
     {
         public string TaskID;
@@ -36,11 +266,12 @@ namespace C__Project_1
         public DateTime StartDate = DateTime.MinValue;
         public DateTime EndDate = DateTime.MinValue;
         public int Duration = 1;
-
+        public float TaskWorkingHoursPerDay; //In hours >= 0 && <= 24
         public string Status = "Not start";
         public int PercentageCompleted = 0;
         public bool IsLeafNode = true;
 
+        public Dictionary<string, int> ResourceAndCapacityDic = new Dictionary<string, int>();
         public Task? ParentTask;
         public Dictionary<string, Task> SubTasks = new Dictionary<string, Task>();
     }
@@ -71,7 +302,7 @@ namespace C__Project_1
     {
         public Task RootTask;
         private int latestLevelOneTaskID = 0;
-        public DateTime CurrentDate = new DateTime(2024, 10, 15);
+        public DateTime CurrentDate = DateTime.Now;
         public PDMDiGraph graph = new PDMDiGraph();
         public Dictionary<string, string> TaskNameandIDDic = new Dictionary<string, string>();
         public Dictionary<string, TaskIDandSubtasksID> TaskIDandSubTaskIDDic = new Dictionary<string, TaskIDandSubtasksID>();
@@ -480,7 +711,7 @@ namespace C__Project_1
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null) Print($"Cannot change the timeline of task {TaskName} because it does not exist!\n");
-            else if (Task.SubTasks.Count > 0) Print($"Cannot change the timeline of summary task {TaskName}!\n");
+            else if (!Task.IsLeafNode) Print($"Cannot change the timeline of summary task {TaskName}!\n");
             else if (newStart == DateTime.MinValue || newEnd == DateTime.MinValue) Print($"The timeline of a task must not be set to 1/1/0001!\n");
             else if (newStart > newEnd) Print($"Cannot set timeline because the finish date is before the start date!\n");
             else SetTimeline(TaskName, newStart, newEnd);
@@ -1077,6 +1308,49 @@ namespace C__Project_1
             else Print("Please set priority in these categories: Low/Medium/High or put empty\n");
         }
 
+        public void SetWorkingHoursPerDayFOfTask(string TaskName, float hours)
+        {
+            if (hours < 0f || hours > 24) Print("The value for working hours per day must not be less than zero or greater than 24!\n");
+            else
+            {
+                Task? task = FindTaskNode(TaskName);
+                if (task == null) Print($"Cannot set working hours per day because task {TaskName} does not exist!\n");
+                else task.TaskWorkingHoursPerDay = hours;
+            }
+        }
+
+        public void AddResourceToTask(string ResourceName, string TaskName)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null) return;
+            else if (Task.ResourceAndCapacityDic.ContainsKey(ResourceName)) return;
+            else Task.ResourceAndCapacityDic.Add(ResourceName, 1);
+        }
+
+        public void AddCapacityToResourceOfTask(string ResourceName, string TaskName, int Capacity)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null) return;
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName)) return;
+            else if (Capacity < 1) return;
+            else Task.ResourceAndCapacityDic[ResourceName] = Capacity;
+        }
+
+        public void DeleteResourceOfTask(string ResourceName, string TaskName)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null) return;
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName)) return;
+            else Task.ResourceAndCapacityDic.Remove(ResourceName);
+        }
+
+        public void DeleteAllResourceOfTask(string TaskName)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null) return;
+            else Task.ResourceAndCapacityDic.Clear();
+        }
+
         public Task? FindTaskNode(string TaskName)
         {
             if (!AlreadyHaveThisTask(TaskName))
@@ -1205,13 +1479,12 @@ namespace C__Project_1
             Print($"Status: {Task.Status}\n");
             Print($"Percenteage complete: {Task.PercentageCompleted}\n");
             Print($"Priority: {Task.Priority}\n");
-            Print($"Time budget: {Task.TimeBudget}\n");
-            Print($"Assigned members: ");
-            foreach (string member in Task.AssignedTeamMembers)
+            Print($"Task working hours per day: {Task.TaskWorkingHoursPerDay}\n");
+            Print("Resources and capacity:\n");
+            foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
             {
-                Print($"{member} ");
+                Print($"+{resource.Key}: {resource.Value}\n");
             }
-            Print("\n");
         }
 
         private void Print(string text)
@@ -1533,9 +1806,15 @@ namespace C__Project_1
 
                 foreach (KeyValuePair<string, Vertex> vertex in vertices)
                 {
-                    if (vertex.Value.Depended_vertices.ContainsKey(TaskName)) vertex.Value.Depended_vertices.Remove(TaskName);
+                    if (vertex.Value.Depended_vertices.ContainsKey(TaskName))
+                    {
+                        vertex.Value.Depended_vertices.Remove(TaskName);
+                    }
 
-                    if (vertex.Value.Depending_vertices.ContainsKey(TaskName)) vertex.Value.Depending_vertices.Remove(TaskName);
+                    if (vertex.Value.Depending_vertices.ContainsKey(TaskName))
+                    {
+                        vertex.Value.Depending_vertices.Remove(TaskName);
+                    }
                 }
             }
             else Print($"Cannot remove vertex {TaskName} because it does not exist!\n");
@@ -1726,11 +2005,43 @@ namespace C__Project_1
         }
     }
 
+    class GanttChartBar
+    {
+        public string TaskName;
+
+        public DateTime InitialStartDate;
+        public DateTime StartDate;
+        public DateTime InitialFinishDate;
+        public DateTime FinishDate;
+        public int Duration;
+
+        public string Priority = "";
+        public int BarLevel;
+        public string Status = "Not start";
+        public int PercentageCompleted;
+        public bool Critical = false;
+        public int TotalFloat;
+
+        public Dictionary<string, int> ResourceAndCapacity = new Dictionary<string, int>();
+
+        public Dictionary<string, TypeLag> InitialDepending_vertices = new Dictionary<string, TypeLag>();
+        public Dictionary<string, TypeLag> Depending_vertices = new Dictionary<string, TypeLag>();
+
+        public Dictionary<string, TypeLag> InitialDepended_vertices = new Dictionary<string, TypeLag>();
+        public Dictionary<string, TypeLag> Depended_vertices = new Dictionary<string, TypeLag>();
+
+        public GanttChartBar(string name)
+        {
+            TaskName = name;
+        }
+    }
+
     class GanttChart
     {
         public PDMDiGraph Graph = new PDMDiGraph();
         private TreeOfTasks Tree;
         public List<string> TasksWithOrder = new List<string>();
+        public Dictionary<string, GanttChartBar> TaskBars = new Dictionary<string, GanttChartBar>();
 
         public GanttChart(TreeOfTasks Tree)
         {
@@ -1797,6 +2108,95 @@ namespace C__Project_1
             }
 
             TasksWithOrder = new List<string>(array);
+
+            foreach (string task in array)
+            {
+                if (!TaskBars.ContainsKey(task))
+                {
+                    TaskBars.Add(task, new GanttChartBar(task));
+                }
+            }
+
+            BuildTaskBars();
+            PrintInfoOfAllTaskBars();
+            PrintTasksOrder();
+        }
+
+        private void BuildTaskBars()
+        {
+            foreach (KeyValuePair<string, GanttChartBar> task in TaskBars)
+            {
+                Task? TaskNode = Tree.FindTaskNode(task.Key);
+                if (TaskNode == null)
+                {
+                    Print($"Cannot build task bar because task {task.Key} does not exist!\n");
+                    return;
+                }
+
+                task.Value.Duration = TaskNode.Duration;
+                task.Value.Priority = TaskNode.Priority;
+                task.Value.BarLevel = TaskNode.TaskNodeLevelInTree;
+                task.Value.Status = TaskNode.Status;
+                task.Value.PercentageCompleted = TaskNode.PercentageCompleted;
+                task.Value.ResourceAndCapacity = TaskNode.ResourceAndCapacityDic;
+
+                //initial
+
+                task.Value.InitialStartDate = TaskNode.StartDate;
+                task.Value.InitialFinishDate = TaskNode.EndDate;
+
+                if (Tree.graph.vertices.ContainsKey(task.Key))
+                {
+                    task.Value.InitialDepending_vertices = Tree.graph.vertices[task.Key].Depending_vertices;
+                    task.Value.InitialDepended_vertices = Tree.graph.vertices[task.Key].Depended_vertices;
+                }
+
+                //after
+
+                if (Graph.vertices.ContainsKey(task.Key))
+                {
+                    task.Value.StartDate = Graph.vertices[task.Key].ES;
+                    task.Value.FinishDate = Graph.vertices[task.Key].EF;
+
+                    task.Value.Depending_vertices = Graph.vertices[task.Key].Depending_vertices;
+                    task.Value.Depended_vertices = Graph.vertices[task.Key].Depended_vertices;
+                }
+                else
+                {
+                    task.Value.StartDate = task.Value.InitialStartDate;
+                    task.Value.FinishDate = task.Value.InitialFinishDate;
+
+                    task.Value.Depending_vertices = task.Value.InitialDepending_vertices;
+                    task.Value.Depended_vertices = task.Value.InitialDepended_vertices;
+                }
+
+                //float
+
+                if (Graph.CheckIfVertexExists(task.Key))
+                {
+                    task.Value.TotalFloat = Graph.vertices[task.Key].TotalFloat;
+
+                    if (task.Value.TotalFloat == 0)
+                    {
+                        task.Value.Critical = true;
+                    }
+                }
+            }
+        }
+
+        public static bool CanBuildGanttChart(TreeOfTasks Tree)
+        {
+            bool build = true;
+
+            foreach (KeyValuePair<string, string> Task in Tree.TaskNameandIDDic)
+            {
+                if (!Tree.AlreadySettingTimeline(Task.Key))
+                {
+                    build = false;
+                }
+            }
+
+            return build;
         }
 
         private void BuildPDMGraph()
@@ -2000,6 +2400,8 @@ namespace C__Project_1
                     vertex.Value.EF = Task.EndDate;
                 }
             }
+
+            Graph.CalculateStartAndEnd();
         }
 
         private string[] AddSummaryTaskToTopo(string TaskName, string[] array)
@@ -2238,6 +2640,325 @@ namespace C__Project_1
             return value;
         }
 
+        public void PrintTasksOrder()
+        {
+            foreach (string task in TasksWithOrder)
+            {
+                string emptySpace = "";
+                int IDLength = Tree.GetTaskID(task).Length;
+
+                for (int i = 1; i <= IDLength - 1; ++i)
+                {
+                    emptySpace += " ";
+                }
+
+                Print($"{emptySpace}{task}\n");
+            }
+        }
+
+        public void PrintInfoOfAllTaskBars()
+        {
+            foreach (KeyValuePair<string, GanttChartBar> TaskBar in TaskBars)
+            {
+                PrintInfoOfTaskBar(TaskBar.Key);
+                Print("\n");
+            }
+        }
+
+        public void PrintInfoOfTaskBar(string TaskName)
+        {
+            GanttChartBar TaskBar = TaskBars[TaskName];
+
+            Print($"Task name: {TaskBar.TaskName}\n");
+
+            Print($"Initial start date: {TaskBar.InitialStartDate}\n");
+            Print($"Start date: {TaskBar.StartDate}\n");
+            Print($"Initial finish date: {TaskBar.InitialFinishDate}\n");
+            Print($"Finish date: {TaskBar.FinishDate}\n");
+            Print($"Duration: {TaskBar.Duration}\n");
+
+            Print($"Priority: {TaskBar.Priority}\n");
+            Print($"Bar level: {TaskBar.BarLevel}\n");
+            Print($"Status: {TaskBar.Status}\n");
+            Print($"Percentage complete: {TaskBar.PercentageCompleted}\n");
+
+            if (Graph.CheckIfVertexExists(TaskBar.TaskName))
+            {
+                Print($"Critical: {TaskBar.Critical}\n");
+                Print($"Total float: {TaskBar.TotalFloat}\n");
+            }
+
+            Print("Initial depending: ");
+            foreach (KeyValuePair<string, TypeLag> dependingTask in TaskBar.InitialDepending_vertices)
+            {
+                Print($"{dependingTask.Key} ");
+            }
+
+            Print("\nDepending: ");
+            foreach (KeyValuePair<string, TypeLag> dependingTask in TaskBar.Depending_vertices)
+            {
+                Print($"{dependingTask.Key} ");
+            }
+
+            Print("\nInitial depended: ");
+            foreach (KeyValuePair<string, TypeLag> dependedTask in TaskBar.InitialDepended_vertices)
+            {
+                Print($"{dependedTask.Key} ");
+            }
+
+            Print("\nDepended: ");
+            foreach (KeyValuePair<string, TypeLag> dependedTask in TaskBar.Depended_vertices)
+            {
+                Print($"{dependedTask.Key} ");
+            }
+
+            Print("\nResources and capacity:\n");
+            foreach (KeyValuePair<string, int> resource in TaskBar.ResourceAndCapacity)
+            {
+                Print($"+{resource.Key}: {resource.Value}\n");
+            }
+        }
+
+        private void Print(string text)
+        {
+            Console.Write(text);
+        }
+    }
+
+    class ProjectManagement
+    {
+        public TreeOfTasks ProjectTree;
+        public GanttChart? ProjectGanttChart;
+        public ResourceManagement Resources = new ResourceManagement();
+
+        public ProjectManagement(string ProjectName)
+        {
+            ProjectTree = new TreeOfTasks(ProjectName);
+        }
+
+        public void CreateOrUpdateGanttChart()
+        {
+            if (GanttChart.CanBuildGanttChart(ProjectTree))
+            {
+                ProjectGanttChart = new GanttChart(ProjectTree);
+            }
+            else Print("Create/Update Gantt Chart failed!\n");
+        }
+
+        public void AddTask(string TaskName)
+        {
+            ProjectTree.AddTaskToRootTask(TaskName);
+        }
+
+        public void AddSubtaskToTask(string SubtaskName, string TaskName)
+        {
+            ProjectTree.AddSubtaskToTask(SubtaskName, TaskName);
+        }
+
+        public void ChangeTaskName(string CurrentTaskName, string NewTaskName)
+        {
+            ProjectTree.ChangeTaskName(CurrentTaskName, NewTaskName);
+        }
+
+        public void DeleteTask(string TaskName)
+        {
+            ProjectTree.DeleteTask(TaskName);
+        }
+
+        public void AddDependency(string TaskName, string DependingTaskName, string DependencyType)
+        {
+            ProjectTree.AddDependency(TaskName, DependingTaskName, DependencyType);
+        }
+
+        public void AddLagToDependency(string TaskName, string DependingTaskName, int Lag)
+        {
+            ProjectTree.AddLagToDependency(TaskName, DependingTaskName, Lag);
+        }
+
+        public void DeleteDependency(string TaskName, string DependingTaskName)
+        {
+            ProjectTree.DeleteDependency(TaskName, DependingTaskName);
+        }
+
+        public void SetTimelineOfTask(string TaskName, DateTime StartDate, DateTime FinishDate)
+        {
+            ProjectTree.SetTimelineForTask(TaskName, StartDate, FinishDate);
+        }
+
+        public void ChangeDurationOfTask(string TaskName, int Duration)
+        {
+            ProjectTree.ChangeDuration(TaskName, Duration);
+        }
+
+        public void UpdateStatusOfTask(string TaskName, string Status)
+        {
+            ProjectTree.UpdateStatus(TaskName, Status);
+        }
+
+        public void AddDescriptionToTask(string TaskName, string Description)
+        {
+            ProjectTree.AddDescriptionToTask(TaskName, Description);
+        }
+
+        public void DeleteTaskDescriptionNumber(string TaskName, int Number)
+        {
+            ProjectTree.DeleteDescriptionOfTaskAtLine(TaskName, Number);
+        }
+
+        public void DeleteAllDescriptionOfTask(string TaskName)
+        {
+            ProjectTree.DeleteAllDescriptionOfTask(TaskName);
+        }
+
+        public void SetPriorityOfTask(string TaskName, string Priority)
+        {
+            ProjectTree.SetPriorityOfTask(TaskName, Priority);
+        }
+
+        public void SetNumberOfWorkingHoursPerDayOfTask(string TaskName, float Hours)
+        {
+            ProjectTree.SetWorkingHoursPerDayFOfTask(TaskName, Hours);
+        }
+
+        public void AddResourceToTask(string ResourceName, string TaskName)
+        {
+            if (Resources.CheckIfWorkResourceExists(ResourceName) || Resources.CheckIfMaterialResourceExists(ResourceName))
+            {
+                ProjectTree.AddResourceToTask(ResourceName, TaskName);
+            }
+            else Print($"Resource {ResourceName} does not exist!\n");
+        }
+
+        public void AddCapacityToResourceOfTask(string ResourceName, string TaskName, int Capacity)
+        {
+            ProjectTree.AddCapacityToResourceOfTask(ResourceName, TaskName, Capacity);
+        }
+
+        public void DeleteResourceOfTask(string ResourceName, string TaskName)
+        {
+            ProjectTree.DeleteResourceOfTask(ResourceName, TaskName);
+        }
+
+        public void DeleteAllResourceOfTask(string TaskName)
+        {
+            ProjectTree.DeleteAllResourceOfTask(TaskName);
+        }
+
+        public string GetTaskNameFromID(string TaskID)
+        {
+            return ProjectTree.GetTaskNameFromID(TaskID);
+        }
+
+        public string GetTaskIDFromTaskName(string TaskName)
+        {
+            return ProjectTree.GetTaskID(TaskName);
+        }
+
+        public void PrintInformationOfTask(string TaskName)
+        {
+            ProjectTree.PrintInfoOfTask(TaskName);
+        }
+
+        public void AddWorkResource(string ResourceName)
+        {
+            Resources.AddNewWorkResource(ResourceName);
+        }
+
+        public void AddMaterialResource(string ResourceName)
+        {
+            Resources.AddNewMaterialResource(ResourceName);
+        }
+
+        public void ChangeNameOfWorkResource(string CurrentName, string NewName)
+        {
+            Resources.ChangeWorkResourceName(CurrentName, NewName);
+        }
+
+        public void ChangeNameOfMaterialResource(string CurrentName, string NewName)
+        {
+            Resources.ChangeMaterialResourceName(CurrentName, NewName);
+        }
+
+        public void DeleteWorkResource(string ResourceName)
+        {
+            Resources.DeleteWorkResource(ResourceName);
+
+            foreach(KeyValuePair<string, string> Task in ProjectTree.TaskNameandIDDic)
+            {
+                DeleteResourceOfTask(ResourceName, Task.Key);
+            }
+        }
+
+        public void DeleteMaterialResource(string ResourceName)
+        {
+            Resources.DeleteMaterialResource(ResourceName);
+
+            foreach (KeyValuePair<string, string> Task in ProjectTree.TaskNameandIDDic)
+            {
+                DeleteResourceOfTask(ResourceName, Task.Key);
+            }
+        }
+
+        public void SetStandardRateOfWorkResource(string ResourceName, float StandardRate)
+        {
+            Resources.SetStandardRateOfWorkResource(ResourceName, StandardRate);
+        }
+
+        public void SetStandardRateOfMaterialResource(string ResourceName, float StandardRate)
+        {
+            Resources.SetStandardRateOfMaterialResource(ResourceName, StandardRate);
+        }
+
+        public void SetOvertimeRateOfWorkResource(string ResourceName, float OvertimeRate)
+        {
+            Resources.SetOvertimeRateOfWorkResource(ResourceName, OvertimeRate);
+        }
+
+        public void SetCurrencyOfWorkResource(string ResourceName, string Currency)
+        {
+            Resources.SetCurrencyOfWorkResource(ResourceName, Currency);
+        }
+
+        public void SetCurrencyOfMaterialResource(string ResourceName, string Currency)
+        {
+            Resources.SetCurrencyOfMaterialResource(ResourceName, Currency);
+        }
+
+        public void SetWorkingHoursPerDayOfWorkResource(string ResourceName, float Hours)
+        {
+            Resources.SetWorkingHoursPerDayOfWorkResource(ResourceName, Hours);
+        }
+
+        public void SetMaximumWorkingHoursPerDayOfWorkResource(string ResourceName, float Hours)
+        {
+            Resources.SetMaximumWorkingHoursPerDayOfWorkResource(ResourceName, Hours);
+        }
+
+        public void SetAvailableCapacityOfWorkResource(string ResourceName, int Capacity)
+        {
+            Resources.SetAvailableCapacityOfWorkResource(ResourceName, Capacity);
+        }
+
+        public void SetRateUnitOfMaterialResource(string ResourceName, string RateUnit)
+        {
+            Resources.SetRateUnitOfMaterialResource(ResourceName, RateUnit);
+        }
+
+        public void SetAccrueTypeOfWorkResource(string ResourceName, string AccrueTyoe)
+        {
+            Resources.SetAccrueOfWorkResource(ResourceName, AccrueTyoe);
+        }
+
+        public void PrintInformationOfWorkResource(string ResourceName)
+        {
+            Resources.PrintInfoOfWorkResource(ResourceName);
+        }
+
+        public void PrintInformationOfMaterialResource(string ResourceName)
+        {
+            Resources.PrintInfoOfMaterialResource(ResourceName);
+        }
+
         private void Print(string text)
         {
             Console.Write(text);
@@ -2309,8 +3030,8 @@ namespace C__Project_1
             Tree.AddDependency("C3", "C2", "FS");
             Tree.AddDependency("C4", "C3", "FF");
 
-            //Print("\n\n");
-            //Tree.PrintAllTasksInfo();
+            ////Print("\n\n");
+            ////Tree.PrintAllTasksInfo();
 
             Tree.AddLagToDependency("A12", "A2", 2);
             Tree.AddLagToDependency("A32", "A31", 1);
