@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Resources;
 using System.Security;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -323,7 +324,7 @@ namespace C__Project_1
                 Task? Task = FindTaskNode(TaskName);
                 if (Task == null)
                 {
-                    Print($"Cannot change the name task {TaskName} does not exist!\n");
+                    Print($"Cannot change the name of task {TaskName} because it does not exist!\n");
                     return;
                 }
 
@@ -1351,6 +1352,189 @@ namespace C__Project_1
             else Task.ResourceAndCapacityDic.Clear();
         }
 
+        public float CalculateCostOfSubtask(string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+
+            float cost = 0;
+
+            foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
+            {
+                if (Resources.CheckIfWorkResourceExists(resource.Key))
+                {
+                    if (Resources.WorkResourceList[resource.Key].Accrue == "Start")
+                    {
+                        cost += CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                    }
+                    else if (Resources.WorkResourceList[resource.Key].Accrue == "End")
+                    {
+                        cost += CalculateCostEndAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                    }
+                    else if (Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
+                    {
+                        cost += CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                    }
+                }
+                else if (Resources.CheckIfMaterialResourceExists(resource.Key)) cost += CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources);
+            }
+
+            return cost;
+        }
+
+        public float CalculateCostProratedAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName))
+            {
+                Print($"Resource {ResourceName} does not exist in task {TaskName}!\n");
+                return 0;
+            }
+            else if (!Resources.CheckIfWorkResourceExists(ResourceName)) Print($"Resource {ResourceName} does not exist!\n");
+
+            float cost = 0;
+
+            if (CurrentDate >= Task.StartDate && CurrentDate <= Task.EndDate)
+            {
+                float WorkingHoursPerDayOfTask = Task.TaskWorkingHoursPerDay;
+                float MaximumWorkingHoursOfWorkResource = Resources.WorkResourceList[ResourceName].MaximumWorkingHoursPerDay;
+                float StandardRate = Resources.WorkResourceList[ResourceName].StandardRate;
+                float OvertimeRate = Resources.WorkResourceList[ResourceName].OvertimeRate;
+                int Capacity = Task.ResourceAndCapacityDic[ResourceName];
+
+                TimeSpan span = CurrentDate - Task.StartDate;
+
+                float costPerDay = WorkingHoursPerDayOfTask <= MaximumWorkingHoursOfWorkResource
+                                                     ? WorkingHoursPerDayOfTask * StandardRate
+                                                     : MaximumWorkingHoursOfWorkResource * StandardRate + (WorkingHoursPerDayOfTask - MaximumWorkingHoursOfWorkResource) * OvertimeRate;
+
+                cost += costPerDay * (span.Days + 1) * Capacity;
+            }
+            else if (CurrentDate > Task.EndDate) cost += CalculateTotalCostOfaResourceInTask(ResourceName, TaskName, Resources);
+
+            return cost;
+        }
+
+        public float CalculateCostStartAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName))
+            {
+                Print($"Resource {ResourceName} does not exist in task {TaskName}!\n");
+                return 0;
+            }
+
+            float cost = 0;
+
+            if (CurrentDate >= Task.StartDate)
+            {
+                cost += CalculateTotalCostOfaResourceInTask(ResourceName, TaskName, Resources);
+            }
+
+            return cost;
+        }
+
+        public float CalculateCostEndAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName))
+            {
+                Print($"Resource {ResourceName} does not exist in task {TaskName}!\n");
+                return 0;
+            }
+
+            float cost = 0;
+
+            if (CurrentDate >= Task.EndDate)
+            {
+                cost += CalculateTotalCostOfaResourceInTask(ResourceName, TaskName, Resources);
+            }
+
+            return cost;
+        }
+
+        public float CalculateCostOfSummaryTask(string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+
+            float TotalCost = 0;
+
+            foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
+            {
+                TotalCost += CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources);
+            }
+
+            foreach (KeyValuePair<string, Task> subtask in Task.SubTasks)
+            {
+                TotalCost += CalculateCostOfSummaryTask(subtask.Value.TaskName, Resources);
+            }
+
+            return TotalCost;
+        }
+
+        public float CalculateTotalCostOfaResourceInTask(string ResourceName, string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot calculate cost because {TaskName} does not exist!\n");
+                return 0;
+            }
+            else if (!Task.ResourceAndCapacityDic.ContainsKey(ResourceName))
+            {
+                Print($"Resource {ResourceName} does not exist in task {TaskName}!\n");
+                return 0;
+            }
+
+            float cost = 0;
+
+            if (Resources.CheckIfWorkResourceExists(ResourceName))
+            {
+                float WorkingHoursPerDayOfTask = Task.TaskWorkingHoursPerDay;
+                float MaximumWorkingHoursOfWorkResource = Resources.WorkResourceList[ResourceName].MaximumWorkingHoursPerDay;
+                float StandardRate = Resources.WorkResourceList[ResourceName].StandardRate;
+                float OvertimeRate = Resources.WorkResourceList[ResourceName].OvertimeRate;
+                int Capacity = Task.ResourceAndCapacityDic[ResourceName];
+
+                float costPerDay = WorkingHoursPerDayOfTask <= MaximumWorkingHoursOfWorkResource
+                                                     ? WorkingHoursPerDayOfTask * StandardRate
+                                                     : MaximumWorkingHoursOfWorkResource * StandardRate + (WorkingHoursPerDayOfTask - MaximumWorkingHoursOfWorkResource) * OvertimeRate;
+
+                cost += costPerDay * Task.Duration * Capacity;
+            }
+            else if (Resources.CheckIfMaterialResourceExists(ResourceName))
+            {
+                cost += Resources.MaterialResourceList[ResourceName].StandardRate * Task.ResourceAndCapacityDic[ResourceName];
+            }
+            else Print($"Resource {ResourceName} does not exist!\n");
+
+            return cost;
+        }
+
         public Task? FindTaskNode(string TaskName)
         {
             if (!AlreadyHaveThisTask(TaskName))
@@ -1480,6 +1664,7 @@ namespace C__Project_1
             Print($"Percenteage complete: {Task.PercentageCompleted}\n");
             Print($"Priority: {Task.Priority}\n");
             Print($"Task working hours per day: {Task.TaskWorkingHoursPerDay}\n");
+            //description
             Print("Resources and capacity:\n");
             foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
             {
@@ -2736,6 +2921,14 @@ namespace C__Project_1
             ProjectTree = new TreeOfTasks(ProjectName);
         }
 
+        public void SetCurrenDateOfProject(DateTime CurrentDate)
+        {
+            if (CurrentDate != DateTime.MinValue)
+            {
+                ProjectTree.CurrentDate = CurrentDate;
+            }
+        }
+
         public void CreateOrUpdateGanttChart()
         {
             if (GanttChart.CanBuildGanttChart(ProjectTree))
@@ -2883,7 +3076,7 @@ namespace C__Project_1
         {
             Resources.DeleteWorkResource(ResourceName);
 
-            foreach(KeyValuePair<string, string> Task in ProjectTree.TaskNameandIDDic)
+            foreach (KeyValuePair<string, string> Task in ProjectTree.TaskNameandIDDic)
             {
                 DeleteResourceOfTask(ResourceName, Task.Key);
             }
