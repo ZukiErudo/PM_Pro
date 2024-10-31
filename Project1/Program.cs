@@ -29,7 +29,6 @@ namespace C__Project_1
         public float OvertimeRate; //>= 0
 
         private const string RateUnit = "hour";
-        public float WorkingHoursPerDay; //>= 0 && <= 24
         public float MaximumWorkingHoursPerDay = 24; //>= 0 && <= 24
         public int AvailableCapacity = 1; //>= 1
         public string Accrue = "Prorated"; //Start/Prorated/End
@@ -44,7 +43,6 @@ namespace C__Project_1
             Print($"Resource name: {ResourceName}\n");
             Print($"Standard rate cost: {StandardRate} {Currency}/{RateUnit}\n");
             Print($"Overtime rate cost: {OvertimeRate} {Currency}/{RateUnit}\n");
-            Print($"Working hours: {WorkingHoursPerDay} hours/day\n");
             Print($"Maximum working hours: {MaximumWorkingHoursPerDay} hours/day\n");
             Print($"Available capacity: {AvailableCapacity}\n");
             Print($"Accrue type: {Accrue}\n");
@@ -69,6 +67,7 @@ namespace C__Project_1
 
     class ResourceManagement
     {
+        public string Currency = "$";
         public Dictionary<string, WorkResource> WorkResourceList = new Dictionary<string, WorkResource>();
         public Dictionary<string, MaterialResource> MaterialResourceList = new Dictionary<string, MaterialResource>();
 
@@ -79,6 +78,7 @@ namespace C__Project_1
             if (!CheckIfWorkResourceExists(name) && !CheckIfMaterialResourceExists(name))
             {
                 WorkResourceList.Add(name, new WorkResource(name));
+                WorkResourceList[name].Currency = Currency;
             }
         }
 
@@ -87,6 +87,7 @@ namespace C__Project_1
             if (!CheckIfMaterialResourceExists(name) && !CheckIfWorkResourceExists(name))
             {
                 MaterialResourceList.Add(name, new MaterialResource(name));
+                MaterialResourceList[name].Currency = Currency;
             }
         }
 
@@ -150,7 +151,22 @@ namespace C__Project_1
             }
         }
 
-        public void SetCurrencyOfWorkResource(string name, string currency)
+        public void SetCurrencyForAllResources(string Currency)
+        {
+            this.Currency = Currency;
+
+            foreach(KeyValuePair<string, WorkResource> resource in WorkResourceList)
+            {
+                SetCurrencyOfWorkResource(resource.Key, Currency);
+            }
+
+            foreach(KeyValuePair<string, MaterialResource> resource in MaterialResourceList)
+            {
+                SetCurrencyOfMaterialResource(resource.Key, Currency);
+            }
+        }
+
+        private void SetCurrencyOfWorkResource(string name, string currency)
         {
             if (CheckIfWorkResourceExists(name))
             {
@@ -158,19 +174,11 @@ namespace C__Project_1
             }
         }
 
-        public void SetCurrencyOfMaterialResource(string name, string currency)
+        private void SetCurrencyOfMaterialResource(string name, string currency)
         {
             if (CheckIfMaterialResourceExists(name))
             {
                 MaterialResourceList[name].Currency = currency;
-            }
-        }
-
-        public void SetWorkingHoursPerDayOfWorkResource(string name, float hours)
-        {
-            if (CheckIfWorkResourceExists(name) && hours >= 0 && hours <= 24)
-            {
-                WorkResourceList[name].WorkingHoursPerDay = hours;
             }
         }
 
@@ -1090,7 +1098,7 @@ namespace C__Project_1
                 return;
             }
 
-            if (Status == "In progress" && Dependencies.ContainsKey(TaskName))
+            if (Status == "In progress" && Dependencies.ContainsKey(TaskName)) 
             {
                 foreach (KeyValuePair<string, TypeLag> depending in Dependencies[TaskName].DependingTasks)
                 {
@@ -1106,28 +1114,37 @@ namespace C__Project_1
                         int Lag = depending.Value.Lag;
                         string Type = depending.Value.Type;
 
-                        if (Lag == 0 && !(DependingTask.Status == "In progress" || DependingTask.Status == "Complete"))
+                        if (Lag >= 0)
                         {
-                            Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                            Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
-                            return;
+                            if(Type == "SS" && DependingTask.Status == "Not start")
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                return;
+                            }
+                            else if(Type == "FS" && DependingTask.Status != "Complete")
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                return;
+                            }
                         }
-                        else if (Lag != 0)
+                        else
                         {
-                            if (Type == "SS" && DependingTask.Status == "Not start" && !(DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0))
+                            if (Type == "SS" && !(DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0))
                             {
                                 Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
                                 Print($"Current Date: {CurrentDate}\n");
                                 Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
                                 Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
                                 Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
                                 return;
                             }
-                            else if (Type == "FS" && DependingTask.Status != "Complete" && !(DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(1 + Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0))
+                            else if (Type == "FS" && !(DependingTask.Status == "In progress" && (DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(1 + Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0)))
                             {
                                 Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
                                 Print($"Current Date: {CurrentDate}\n");
                                 Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
                                 Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
@@ -1154,32 +1171,61 @@ namespace C__Project_1
                         int Lag = depending.Value.Lag;
                         string Type = depending.Value.Type;
 
-                        if (Lag == 0 && !(DependingTask.Status == "In progress" || DependingTask.Status == "Complete"))
+                        if (Lag >= 0)
                         {
-                            Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                            Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
-                            return;
+                            if((Type == "SS" || Type == "SF") && DependingTask.Status == "Not start")
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                return;
+                            }
+                            else if((Type == "FF" || Type == "FS") && DependingTask.Status != "Complete")
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                return;
+                            }
                         }
-                        else if (Lag != 0)
+                        else
                         {
-                            if (Type == "FF" && DependingTask.Status != "Complete" && !(DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.EndDate) >= 0))
+                            if (Type == "SF" && !(DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.EndDate) >= 0))
                             {
                                 Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                Print($"Current Date: {CurrentDate}\n");
+                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
+                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
+                                Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
+                                return;
+                            }
+                            else if (Type == "SS" && !(DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0))
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                Print($"Current Date: {CurrentDate}\n");
+                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
+                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
+                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+                                return;
+                            }
+                            else if (Type == "FF" && !(DependingTask.Status == "In progress" && (DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.EndDate) >= 0)))
+                            {
+                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
                                 Print($"Current Date: {CurrentDate}\n");
                                 Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
                                 Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag)}\n");
                                 Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
                                 return;
                             }
-                            else if (Type == "SF" && DependingTask.Status == "Not start" && !(DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.EndDate) >= 0))
+                            else if (Type == "FS" && !(DependingTask.Status == "In progress" && (DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(1 + Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0)))
                             {
                                 Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}.\n");
+                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
                                 Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
-                                Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
+                                Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
+                                Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
+                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
                                 return;
                             }
                         }
@@ -1352,7 +1398,69 @@ namespace C__Project_1
             else Task.ResourceAndCapacityDic.Clear();
         }
 
-        public float CalculateCostOfSubtask(string TaskName, ResourceManagement Resources)
+        public void PrintDetailedResourcesAndTotalCostInfoOfTask(string TaskName, ResourceManagement Resources)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot print resource and cost information of task {TaskName} because it does not exist!\n");
+                return;
+            }
+
+            if (!Task.IsLeafNode) Print($"Total cost of summary task {TaskName}: {CalculateCostOfSummaryTask(TaskName, Resources)} {Resources.Currency}\n");
+            else Print($"Total cost of task {TaskName}: {CalculateCostOfSubtask(TaskName, Resources)} {Resources.Currency}\n");
+
+            Print("Resources:\n");
+
+            foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
+            {
+                Print($"-{resource.Key}\n");
+                Print($" +Capacity: {resource.Value}\n");
+
+                if (Resources.CheckIfWorkResourceExists(resource.Key))
+                {
+                    Print(" +Type: Work\n");
+
+                    if (Resources.WorkResourceList[resource.Key].Accrue == "Start")
+                    {
+                        float WorkResourceCost = CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
+
+                        Print(" +Accrue type: Start\n");
+                        Print($" +Cost: ");
+                        if (CurrentDate >= Task.StartDate) Print($"{WorkResourceCost}\n");
+                        else Print("\n");
+                    }
+                    else if(Resources.WorkResourceList[resource.Key].Accrue == "End")
+                    {
+                        float WorkResourceCost = CalculateCostEndAccrueOfWorkResource(resource.Key, TaskName, Resources);
+
+                        Print(" +Accrue type: End\n");
+                        Print($" +Cost: ");
+                        if (CurrentDate >= Task.EndDate) Print($"{WorkResourceCost}\n");
+                        else Print("\n");
+                    }
+                    else if(Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
+                    {
+                        float WorkResourceCost = CalculateCostProratedAccrueOfWorkResource(resource.Key, TaskName, Resources);
+
+                        Print(" +Accrue type: Prorated\n");
+                        Print($" +Cost: ");
+                        if (CurrentDate >= Task.StartDate) Print($"{WorkResourceCost}\n");
+                        else Print("\n");
+                    }
+                }
+                else if (Resources.CheckIfMaterialResourceExists(resource.Key))
+                {
+                    Print(" +Type: Material\n");
+                    Print($" +Cost: {CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources)}\n");
+                }
+                else Print($" +Resource {resource.Key} does not exist!\n");
+                
+                Print("\n");
+            }
+        }
+
+        private float CalculateCostOfSubtask(string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1368,17 +1476,11 @@ namespace C__Project_1
                 if (Resources.CheckIfWorkResourceExists(resource.Key))
                 {
                     if (Resources.WorkResourceList[resource.Key].Accrue == "Start")
-                    {
                         cost += CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
-                    }
                     else if (Resources.WorkResourceList[resource.Key].Accrue == "End")
-                    {
                         cost += CalculateCostEndAccrueOfWorkResource(resource.Key, TaskName, Resources);
-                    }
                     else if (Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
-                    {
-                        cost += CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
-                    }
+                        cost += CalculateCostProratedAccrueOfWorkResource(resource.Key, TaskName, Resources);
                 }
                 else if (Resources.CheckIfMaterialResourceExists(resource.Key)) cost += CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources);
             }
@@ -1386,7 +1488,7 @@ namespace C__Project_1
             return cost;
         }
 
-        public float CalculateCostProratedAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        private float CalculateCostProratedAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1411,12 +1513,11 @@ namespace C__Project_1
                 float OvertimeRate = Resources.WorkResourceList[ResourceName].OvertimeRate;
                 int Capacity = Task.ResourceAndCapacityDic[ResourceName];
 
-                TimeSpan span = CurrentDate - Task.StartDate;
-
                 float costPerDay = WorkingHoursPerDayOfTask <= MaximumWorkingHoursOfWorkResource
                                                      ? WorkingHoursPerDayOfTask * StandardRate
                                                      : MaximumWorkingHoursOfWorkResource * StandardRate + (WorkingHoursPerDayOfTask - MaximumWorkingHoursOfWorkResource) * OvertimeRate;
 
+                TimeSpan span = CurrentDate - Task.StartDate;
                 cost += costPerDay * (span.Days + 1) * Capacity;
             }
             else if (CurrentDate > Task.EndDate) cost += CalculateTotalCostOfaResourceInTask(ResourceName, TaskName, Resources);
@@ -1424,7 +1525,7 @@ namespace C__Project_1
             return cost;
         }
 
-        public float CalculateCostStartAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        private float CalculateCostStartAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1448,7 +1549,7 @@ namespace C__Project_1
             return cost;
         }
 
-        public float CalculateCostEndAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
+        private float CalculateCostEndAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources) 
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1472,7 +1573,7 @@ namespace C__Project_1
             return cost;
         }
 
-        public float CalculateCostOfSummaryTask(string TaskName, ResourceManagement Resources)
+        private float CalculateCostOfSummaryTask(string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1496,7 +1597,7 @@ namespace C__Project_1
             return TotalCost;
         }
 
-        public float CalculateTotalCostOfaResourceInTask(string ResourceName, string TaskName, ResourceManagement Resources)
+        private float CalculateTotalCostOfaResourceInTask(string ResourceName, string TaskName, ResourceManagement Resources) 
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1510,7 +1611,7 @@ namespace C__Project_1
                 return 0;
             }
 
-            float cost = 0;
+            float cost = 0; 
 
             if (Resources.CheckIfWorkResourceExists(ResourceName))
             {
@@ -1521,15 +1622,13 @@ namespace C__Project_1
                 int Capacity = Task.ResourceAndCapacityDic[ResourceName];
 
                 float costPerDay = WorkingHoursPerDayOfTask <= MaximumWorkingHoursOfWorkResource
-                                                     ? WorkingHoursPerDayOfTask * StandardRate
-                                                     : MaximumWorkingHoursOfWorkResource * StandardRate + (WorkingHoursPerDayOfTask - MaximumWorkingHoursOfWorkResource) * OvertimeRate;
+                                                 ? WorkingHoursPerDayOfTask * StandardRate
+                                                 : MaximumWorkingHoursOfWorkResource * StandardRate + (WorkingHoursPerDayOfTask - MaximumWorkingHoursOfWorkResource) * OvertimeRate;
 
                 cost += costPerDay * Task.Duration * Capacity;
             }
             else if (Resources.CheckIfMaterialResourceExists(ResourceName))
-            {
                 cost += Resources.MaterialResourceList[ResourceName].StandardRate * Task.ResourceAndCapacityDic[ResourceName];
-            }
             else Print($"Resource {ResourceName} does not exist!\n");
 
             return cost;
@@ -1664,11 +1763,10 @@ namespace C__Project_1
             Print($"Percenteage complete: {Task.PercentageCompleted}\n");
             Print($"Priority: {Task.Priority}\n");
             Print($"Task working hours per day: {Task.TaskWorkingHoursPerDay}\n");
-            //description
-            Print("Resources and capacity:\n");
-            foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
+            Print("Description:\n");
+            foreach(string description in Task.Desription)
             {
-                Print($"+{resource.Key}: {resource.Value}\n");
+                Print($"+ {description}\n");
             }
         }
 
@@ -2195,9 +2293,9 @@ namespace C__Project_1
         public string TaskName;
 
         public DateTime InitialStartDate;
-        public DateTime StartDate;
+        public DateTime StartDate; //
         public DateTime InitialFinishDate;
-        public DateTime FinishDate;
+        public DateTime FinishDate; //
         public int Duration;
 
         public string Priority = "";
@@ -2210,10 +2308,10 @@ namespace C__Project_1
         public Dictionary<string, int> ResourceAndCapacity = new Dictionary<string, int>();
 
         public Dictionary<string, TypeLag> InitialDepending_vertices = new Dictionary<string, TypeLag>();
-        public Dictionary<string, TypeLag> Depending_vertices = new Dictionary<string, TypeLag>();
+        public Dictionary<string, TypeLag> Depending_vertices = new Dictionary<string, TypeLag>(); //
 
         public Dictionary<string, TypeLag> InitialDepended_vertices = new Dictionary<string, TypeLag>();
-        public Dictionary<string, TypeLag> Depended_vertices = new Dictionary<string, TypeLag>();
+        public Dictionary<string, TypeLag> Depended_vertices = new Dictionary<string, TypeLag>(); //
 
         public GanttChartBar(string name)
         {
@@ -2244,7 +2342,9 @@ namespace C__Project_1
             if (HasDependencies)
             {
                 BuildPDMGraph();
-                TopoSort = TopoSortForChart();
+
+                if (Graph.vertices.Count == 0) return;
+                else TopoSort = TopoSortForChart();
             }
 
             Print("array of Tasks before adding subtasks without dependencies: ");
@@ -2407,6 +2507,7 @@ namespace C__Project_1
                         {
                             Print($"Timeline of task {task} has not been set!\n");
                             Print($"Cannot create Gantt Chart!\n");
+                            Graph = new PDMDiGraph();
                             return;
                         }
                     }
@@ -2437,6 +2538,7 @@ namespace C__Project_1
                             {
                                 Print($"Timeline of {task} has not been set!\n");
                                 Print("Cannot create Gantt Chart!\n");
+                                Graph = new PDMDiGraph();
                                 return;
                             }
                         }
@@ -2454,6 +2556,7 @@ namespace C__Project_1
                             {
                                 Print($"Cannot find task {Task} in Tree!\n");
                                 Print("Cannot create Gantt Chart!\n");
+                                Graph = new PDMDiGraph();
                                 return;
                             }
 
@@ -2464,6 +2567,7 @@ namespace C__Project_1
                                 {
                                     Print($"Cannot find task {DependingTask} in Tree!\n");
                                     Print("Cannot create Gantt Chart!\n");
+                                    Graph = new PDMDiGraph();
                                     return;
                                 }
 
@@ -2483,6 +2587,7 @@ namespace C__Project_1
                             {
                                 Print($"Cannot find task {Task} in Tree!\n");
                                 Print("Cannot create Gantt Chart!\n");
+                                Graph = new PDMDiGraph();
                                 return;
                             }
 
@@ -2493,6 +2598,7 @@ namespace C__Project_1
                                 {
                                     Print($"Cannot find task {DependingTask} in Tree!\n");
                                     Print("Cannot create Gantt Chart!\n");
+                                    Graph = new PDMDiGraph();
                                     return;
                                 }
 
@@ -2512,6 +2618,7 @@ namespace C__Project_1
                             {
                                 Print($"Cannot find task {Task} in Tree!\n");
                                 Print("Cannot create Gantt Chart!\n");
+                                Graph = new PDMDiGraph();
                                 return;
                             }
 
@@ -2522,6 +2629,7 @@ namespace C__Project_1
                                 {
                                     Print($"Cannot find task {DependingTask} in Tree!\n");
                                     Print("Cannot create Gantt Chart!\n");
+                                    Graph = new PDMDiGraph();
                                     return;
                                 }
 
@@ -2541,6 +2649,7 @@ namespace C__Project_1
                             {
                                 Print($"Cannot find task {Task} in Tree!\n");
                                 Print("Cannot create Gantt Chart!\n");
+                                Graph = new PDMDiGraph();
                                 return;
                             }
 
@@ -2551,6 +2660,7 @@ namespace C__Project_1
                                 {
                                     Print($"Cannot find task {DependingTask} in Tree!\n");
                                     Print("Cannot create Gantt Chart!\n");
+                                    Graph = new PDMDiGraph();
                                     return;
                                 }
 
@@ -2565,6 +2675,7 @@ namespace C__Project_1
                     if (Graph.CheckingLoop())
                     {
                         Print("Cannot create Gantt Chart because of loop!\n");
+                        Graph = new PDMDiGraph();
                         return;
                     }
                 }
@@ -2578,6 +2689,7 @@ namespace C__Project_1
                     if (Task == null)
                     {
                         Print($"Cannot find task {vertex.Key} in Tree!\n");
+                        Graph = new PDMDiGraph();
                         return;
                     }
 
@@ -2921,11 +3033,11 @@ namespace C__Project_1
             ProjectTree = new TreeOfTasks(ProjectName);
         }
 
-        public void SetCurrenDateOfProject(DateTime CurrentDate)
+        public void SetCurrenDateOfProject(DateTime ProjectStatusDate)
         {
-            if (CurrentDate != DateTime.MinValue)
+            if (ProjectStatusDate != DateTime.MinValue)
             {
-                ProjectTree.CurrentDate = CurrentDate;
+                ProjectTree.CurrentDate = ProjectStatusDate;
             }
         }
 
@@ -2934,6 +3046,8 @@ namespace C__Project_1
             if (GanttChart.CanBuildGanttChart(ProjectTree))
             {
                 ProjectGanttChart = new GanttChart(ProjectTree);
+
+                if(ProjectGanttChart.Graph.vertices.Count == 0) Print("Create/Update Gantt Chart failed!\n");
             }
             else Print("Create/Update Gantt Chart failed!\n");
         }
@@ -3037,6 +3151,11 @@ namespace C__Project_1
             ProjectTree.DeleteAllResourceOfTask(TaskName);
         }
 
+        public void PrintInformationOfResourcesAndCostOfTask(string TaskName)
+        {
+            ProjectTree.PrintDetailedResourcesAndTotalCostInfoOfTask(TaskName, Resources);
+        }
+
         public string GetTaskNameFromID(string TaskID)
         {
             return ProjectTree.GetTaskNameFromID(TaskID);
@@ -3107,19 +3226,9 @@ namespace C__Project_1
             Resources.SetOvertimeRateOfWorkResource(ResourceName, OvertimeRate);
         }
 
-        public void SetCurrencyOfWorkResource(string ResourceName, string Currency)
+        public void SetCurrencyForAllResource(string Currency)
         {
-            Resources.SetCurrencyOfWorkResource(ResourceName, Currency);
-        }
-
-        public void SetCurrencyOfMaterialResource(string ResourceName, string Currency)
-        {
-            Resources.SetCurrencyOfMaterialResource(ResourceName, Currency);
-        }
-
-        public void SetWorkingHoursPerDayOfWorkResource(string ResourceName, float Hours)
-        {
-            Resources.SetWorkingHoursPerDayOfWorkResource(ResourceName, Hours);
+            Resources.SetCurrencyForAllResources(Currency);
         }
 
         public void SetMaximumWorkingHoursPerDayOfWorkResource(string ResourceName, float Hours)
