@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Resources;
+using System.Runtime.ConstrainedExecution;
 using System.Security;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Transactions;
+using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace C__Project_1
 {
@@ -27,7 +31,6 @@ namespace C__Project_1
     class WorkResource : Resource
     {
         public float OvertimeRate; //>= 0
-
         private const string RateUnit = "hour";
         public float MaximumWorkingHoursPerDay = 24; //>= 0 && <= 24
         public int AvailableCapacity = 1; //>= 1
@@ -75,7 +78,8 @@ namespace C__Project_1
 
         public void AddNewWorkResource(string name)
         {
-            if (!CheckIfWorkResourceExists(name) && !CheckIfMaterialResourceExists(name))
+            if (name.Length > 20) Print($"The name's length of {name} is over 20 characters!\n");
+            else if (!CheckIfWorkResourceExists(name) && !CheckIfMaterialResourceExists(name))
             {
                 WorkResourceList.Add(name, new WorkResource(name));
                 WorkResourceList[name].Currency = Currency;
@@ -84,7 +88,8 @@ namespace C__Project_1
 
         public void AddNewMaterialResource(string name)
         {
-            if (!CheckIfMaterialResourceExists(name) && !CheckIfWorkResourceExists(name))
+            if (name.Length > 20) Print($"The name's length of {name} is over 20 characters!\n");
+            else if (!CheckIfMaterialResourceExists(name) && !CheckIfWorkResourceExists(name))
             {
                 MaterialResourceList.Add(name, new MaterialResource(name));
                 MaterialResourceList[name].Currency = Currency;
@@ -93,7 +98,8 @@ namespace C__Project_1
 
         public void ChangeWorkResourceName(string currentName, string newName)
         {
-            if (CheckIfWorkResourceExists(currentName) && !CheckIfWorkResourceExists(newName))
+            if (newName.Length > 20) Print($"The name's length of {newName} is over 20 characters!\n");
+            else if (CheckIfWorkResourceExists(currentName) && !CheckIfWorkResourceExists(newName))
             {
                 WorkResourceList.Add(newName, WorkResourceList[currentName]);
                 WorkResourceList[newName].ResourceName = newName;
@@ -103,7 +109,8 @@ namespace C__Project_1
 
         public void ChangeMaterialResourceName(string currentName, string newName)
         {
-            if (CheckIfMaterialResourceExists(currentName) && !CheckIfMaterialResourceExists(newName))
+            if (newName.Length > 20) Print($"The name's length of {newName} is over 20 characters!\n");
+            else if (CheckIfMaterialResourceExists(currentName) && !CheckIfMaterialResourceExists(newName))
             {
                 MaterialResourceList.Add(newName, MaterialResourceList[currentName]);
                 MaterialResourceList[newName].ResourceName = newName;
@@ -291,7 +298,12 @@ namespace C__Project_1
         }
     }
 
-    class TreeOfTasks
+    interface IPrintWordWithEmptySpace
+    {
+        void PrintWordWithEmptySpace(string word, int MaximumEmptySpace);
+    }
+
+    class TreeOfTasks : IPrintWordWithEmptySpace
     {
         public Task RootTask;
         private int latestLevelOneTaskID = 0;
@@ -311,7 +323,12 @@ namespace C__Project_1
 
         public void ChangeTaskName(string TaskName, string newTaskName)
         {
-            if (AlreadyHaveThisTask(TaskName) && !AlreadyHaveThisTask(newTaskName))
+            if (newTaskName.Length > 30)
+            {
+                Print("The name's length is over 30 characters!\n");
+                return;
+            }
+            else if (AlreadyHaveThisTask(TaskName) && !AlreadyHaveThisTask(newTaskName))
             {
                 Task? Task = FindTaskNode(TaskName);
                 if (Task == null)
@@ -347,7 +364,12 @@ namespace C__Project_1
 
         public void AddTaskToRootTask(string TaskName)
         {
-            if (AlreadyHaveThisTask(TaskName))
+            if (TaskName.Length > 30)
+            {
+                Print("The name's length is over 30 characters!\n");
+                return;
+            }
+            else if (AlreadyHaveThisTask(TaskName))
             {
                 Print($"There already exists a task with this name ({TaskName}).\n");
                 Print("Please change the task's name!\n");
@@ -368,7 +390,12 @@ namespace C__Project_1
 
         public void AddSubtaskToTask(string subTaskName, string TaskName)
         {
-            if (AlreadyHaveThisTask(subTaskName))
+            if (subTaskName.Length > 30)
+            {
+                Print("The name's length is over 30 characters!\n");
+                return;
+            }
+            else if (AlreadyHaveThisTask(subTaskName))
             {
                 Print($"There already exists a task with this name ({subTaskName}).\n");
                 Print("Please change the task's name!\n");
@@ -733,17 +760,15 @@ namespace C__Project_1
                             return;
                         }
 
-                        Print($"Conflict occurs with dependency {depending.Key} -> {TaskName}!\n");
-                        Print($"Type: {depending.Value.Type}\n");
-                        Print($"Lag = {depending.Value.Lag}\n");
-                        Print($"-Depending Task: {depending.Key}, ID = {dependingTask.TaskID}:\n");
-                        Print($" +Start Date = {dependingTask.StartDate}\n");
-                        Print($" +End Date = {dependingTask.EndDate}\n\n");
-                        Print($"-Task: {TaskName}, ID = {Task.TaskID}:\n");
-                        Print($" +New Start Date = {newStart}\n");
-                        Print($" +New End Date = {newEnd}\n");
-                        Print($" +Current Start Date = {Task.StartDate}\n");
-                        Print($" +Current End Date = {Task.EndDate}\n\n");
+                        Print($"Conflict occurs with dependency {depending.Key} -> {TaskName} type {depending.Value.Type}{depending.Value.Lag}!\n");
+                        Print($"-Depending task: {depending.Key}, ID = {dependingTask.TaskID}:\n");
+                        Print($" +Start Date = {dependingTask.StartDate.ToString("MM/dd/yyyy")}\n");
+                        Print($" +End Date = {dependingTask.EndDate.ToString("MM/dd/yyyy")}\n");
+                        Print($"-Depended task: {TaskName}, ID = {Task.TaskID}:\n");
+                        Print($" +New Start Date = {newStart.ToString("MM/dd/yyyy")}\n");
+                        Print($" +New End Date = {newEnd.ToString("MM/dd/yyyy")}\n");
+                        Print($" +Current Start Date = {Task.StartDate.ToString("MM/dd/yyyy")}\n");
+                        Print($" +Current End Date = {Task.EndDate.ToString("MM/dd/yyyy")}\n\n");
                         return;
                     }
                 }
@@ -797,7 +822,6 @@ namespace C__Project_1
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newStart.AddDays(Lag), newStart.AddDays(Lag + dependedTask.Duration - 1), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newStart, newStart.AddDays(dependedTask.Duration - 1));
-                        // && DateTime.Compare(dependedTask.StartDate, newStart) < 0
                     }
                     else if (Type == "FF")
                     {
@@ -805,7 +829,6 @@ namespace C__Project_1
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newEnd.AddDays(Lag - dependedTask.Duration + 1), newEnd.AddDays(Lag), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newEnd.AddDays(-dependedTask.Duration + 1), newEnd);
-                        // && DateTime.Compare(dependedTask.EndDate, newEnd) < 0
                     }
                     else if (Type == "FS")
                     {
@@ -813,7 +836,6 @@ namespace C__Project_1
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days - 1 != Lag && Lag != 0))
                             SetTimeline(depended.Key, newEnd.AddDays(1 + Lag), newEnd.AddDays(1 + Lag + dependedTask.Duration - 1), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newEnd.AddDays(1), newEnd.AddDays(1 + dependedTask.Duration - 1));
-                        // && DateTime.Compare(dependedTask.StartDate, newEnd) <= 0
                     }
                     else if (Type == "SF")
                     {
@@ -821,7 +843,6 @@ namespace C__Project_1
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newStart.AddDays(Lag - dependedTask.Duration + 1), newStart.AddDays(Lag), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newStart.AddDays(-dependedTask.Duration + 1), newStart);
-                        // && DateTime.Compare(dependedTask.EndDate, newStart) < 0
                     }
                 }
             }
@@ -1197,23 +1218,22 @@ namespace C__Project_1
             Print($"Cannot set the status of {TaskName} to {Status} because of dependency {DependingTaskName} -> {TaskName} type {Type}{Lag}!\n");
             Print($"Depending task {DependingTaskName} status: {DependingTask.Status}\n");
 
-            if(PrintCurrentDate) Print($"Current Date: {CurrentDate}\n");
+            if(PrintCurrentDate) Print($"Current Date: {CurrentDate.ToString("MM/dd/yyyy")}\n");
 
             if(DependingTaskDate == "Start")
             {
-                Print($"DependingTask {DependingTaskName} StartDate: {DependingTask.StartDate}\n");
-                Print($"DependingTask {DependingTaskName} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
+                Print($"DependingTask {DependingTaskName} StartDate: {DependingTask.StartDate.ToString("MM/dd/yyyy")}\n");
+                Print($"DependingTask {DependingTaskName} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag).ToString("MM/dd/yyyy")}\n");
             }
             else if(DependingTaskDate == "End")
             {
-                Print($"DependingTask {DependingTaskName} EndDate: {DependingTask.EndDate}\n");
-
-                if(Type == "FF") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag)}\n");
-                else if(Type == "FS") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
+                Print($"DependingTask {DependingTaskName} EndDate: {DependingTask.EndDate.ToString("MM/dd/yyyy")}\n");
+                if(Type == "FF") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag).ToString("MM/dd/yyyy")}\n");
+                else if(Type == "FS") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag).ToString("MM/dd/yyyy")}\n");
             }
 
-            if(TaskDate == "Start") Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
-            else if (TaskDate == "End") Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
+            if(TaskDate == "Start") Print($"Task {TaskName} StartDate: {Task.StartDate.ToString("MM/dd/yyyy")}\n");
+            else if (TaskDate == "End") Print($"Task {TaskName} EndDate: {Task.EndDate.ToString("MM/dd/yyyy")}\n");
         }
 
         private void UpdateStatusToParentTaskOfTask(string TaskName)
@@ -1240,7 +1260,7 @@ namespace C__Project_1
                     UpdateStatusToParentTaskOfTask(Task.ParentTask.TaskName);
                 }
             }
-            else if (Task.Status == "In progress" && (Task.ParentTask.Status == "Not start" || Task.ParentTask.Status == "Complete"))
+            else if (Task.Status == "In progress" && Task.ParentTask.Status != "In progress")
             {
                 Task.ParentTask.Status = "In progress";
                 UpdateStatusToParentTaskOfTask(Task.ParentTask.TaskName);
@@ -1385,54 +1405,51 @@ namespace C__Project_1
                 return;
             }
 
-            if (!Task.IsLeafNode) Print($"Total cost of summary task {TaskName}: {CalculateCostOfSummaryTask(TaskName, Resources)} {Resources.Currency}\n");
-            else Print($"Total cost of task {TaskName}: {CalculateCostOfSubtask(TaskName, Resources)} {Resources.Currency}\n");
-
-            Print("Resources:\n");
+            if (!Task.IsLeafNode) PrintResourceBarTitle(TaskName, "Summary task", CalculateCostOfSummaryTask(TaskName, Resources), Resources.Currency);
+            else PrintResourceBarTitle(TaskName, "Subtask", CalculateCostOfSubtask(TaskName, Resources), Resources.Currency);
+            Print("\n");
 
             foreach (KeyValuePair<string, int> resource in Task.ResourceAndCapacityDic)
             {
-                Print($"-{resource.Key}\n");
-                Print($" +Capacity: {resource.Value}\n");
+                Print("|");
+                PrintWordWithEmptySpace(resource.Key, 21);
+                PrintWordWithEmptySpace(resource.Value.ToString(), 11);
 
                 if (Resources.CheckIfWorkResourceExists(resource.Key))
                 {
-                    Print(" +Type: Work\n");
+                    PrintWordWithEmptySpace("Work", 10);
 
                     if (Resources.WorkResourceList[resource.Key].Accrue == "Start")
                     {
                         float WorkResourceCost = CalculateCostStartAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                        PrintWordWithEmptySpace("Start", 10);
 
-                        Print(" +Accrue type: Start\n");
-                        Print($" +Cost: ");
-                        if (CurrentDate >= Task.StartDate) Print($"{WorkResourceCost}\n");
-                        else Print("\n");
+                        if (CurrentDate >= Task.StartDate) PrintWordWithEmptySpace($"{WorkResourceCost}{Resources.Currency}", 11);
+                        else PrintWordWithEmptySpace(" ", 11);
                     }
                     else if(Resources.WorkResourceList[resource.Key].Accrue == "End")
                     {
                         float WorkResourceCost = CalculateCostEndAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                        PrintWordWithEmptySpace("End", 10);
 
-                        Print(" +Accrue type: End\n");
-                        Print($" +Cost: ");
-                        if (CurrentDate >= Task.EndDate) Print($"{WorkResourceCost}\n");
-                        else Print("\n");
+                        if (CurrentDate >= Task.EndDate) PrintWordWithEmptySpace($"{WorkResourceCost}{Resources.Currency}", 11);
+                        else PrintWordWithEmptySpace(" ", 11);
                     }
                     else if(Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
                     {
                         float WorkResourceCost = CalculateCostProratedAccrueOfWorkResource(resource.Key, TaskName, Resources);
+                        PrintWordWithEmptySpace("Prorated", 10);
 
-                        Print(" +Accrue type: Prorated\n");
-                        Print($" +Cost: ");
-                        if (CurrentDate >= Task.StartDate) Print($"{WorkResourceCost}\n");
-                        else Print("\n");
+                        if (CurrentDate >= Task.StartDate) PrintWordWithEmptySpace($"{WorkResourceCost}{Resources.Currency}", 11);
+                        else PrintWordWithEmptySpace(" ", 11);
                     }
                 }
                 else if (Resources.CheckIfMaterialResourceExists(resource.Key))
                 {
-                    Print(" +Type: Material\n");
-                    Print($" +Cost: {CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources)}\n");
+                    PrintWordWithEmptySpace("Material", 10);
+                    PrintWordWithEmptySpace(" ", 10);
+                    PrintWordWithEmptySpace(CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources).ToString(), 11);
                 }
-                else Print($" +Resource {resource.Key} does not exist!\n");
                 
                 Print("\n");
             }
@@ -1707,20 +1724,28 @@ namespace C__Project_1
             }
         }
 
-        public void PrintAllTasksInfo(string TaskID = "0")
+        public void PrintAllTasksInfo()
         {
-            PrintFullInfoFromID(TaskID);
-            Print("\n");
+            Print("____________________________________________________________________________________________________________________________________________________\n");
+            PrintInfoBarTitle(); Print("\n");
+            PrintAllTasksInfomation();
+        }
+
+        private void PrintAllTasksInfomation(string TaskID = "0")
+        {
+            PrintFullInfoFromID(TaskID); Print("\n");
 
             foreach (string SubtaskID in TaskIDandSubTaskIDDic[TaskID].SubTaskIDS)
             {
-                PrintAllTasksInfo(SubtaskID);
+                PrintAllTasksInfomation(SubtaskID);
             }
         }
 
         public void PrintInfoOfTask(string TaskName)
         {
-            PrintFullInfoFromID(GetTaskID(TaskName));
+            Print("____________________________________________________________________________________________________________________________________________________\n");
+            PrintInfoBarTitle(); Print("\n");
+            PrintFullInfoFromID(GetTaskID(TaskName)); Print("\n");
         }
 
         private void PrintFullInfoFromID(string TaskID)
@@ -1732,20 +1757,76 @@ namespace C__Project_1
                 return;
             }
 
-            Print($"Task ID: {Task.TaskID}\n");
-            Print($"Task Name: {Task.TaskName}\n");
-            Print($"Duration: {Task.Duration}\n");
-            Print($"Start Date: {Task.StartDate}\n");
-            Print($"Finish Date: {Task.EndDate}\n");
-            Print($"Status: {Task.Status}\n");
-            Print($"Percenteage complete: {Task.PercentageCompleted}\n");
-            Print($"Priority: {Task.Priority}\n");
-            Print($"Task working hours per day: {Task.TaskWorkingHoursPerDay}\n");
+            Print("|");
+            PrintWordWithEmptySpace(Task.TaskID, 10);
+            PrintWordWithEmptySpace(Task.TaskName, 30);
+            PrintWordWithEmptySpace(Task.Duration.ToString(), 10);
+            PrintWordWithEmptySpace(Task.StartDate.ToString("MM/dd/yyyy"), 13);
+            PrintWordWithEmptySpace(Task.EndDate.ToString("MM/dd/yyyy"), 13);
+            PrintWordWithEmptySpace(Task.Status, 13);
+            PrintWordWithEmptySpace(Task.PercentageCompleted.ToString(), 21);
+            PrintWordWithEmptySpace(Task.Priority, 10);
+            PrintWordWithEmptySpace(Task.TaskWorkingHoursPerDay.ToString(), 18);
+        }
+
+        public void PrintTaskDescription(string TaskName)
+        {
+            Task? Task = FindTaskNode(TaskName);
+            if (Task == null)
+            {
+                Print($"Cannot find description from task {TaskName}\n");
+                return;
+            }
+
             Print("Description:\n");
-            foreach(string description in Task.Desription)
+            foreach (string description in Task.Desription)
             {
                 Print($"+ {description}\n");
             }
+        }
+
+        private void PrintInfoBarTitle()
+        {
+            Print("|");
+            PrintWordWithEmptySpace("Task ID", 10);
+            PrintWordWithEmptySpace("Task Name", 30);
+            PrintWordWithEmptySpace("Duration", 10);
+            PrintWordWithEmptySpace("Start Date", 13);
+            PrintWordWithEmptySpace("Finish Date", 13);
+            PrintWordWithEmptySpace("Status", 13);
+            PrintWordWithEmptySpace("Percentage complete", 21);
+            PrintWordWithEmptySpace("Priority", 10);
+            PrintWordWithEmptySpace("Working hours/day", 18);
+        }
+
+        private void PrintResourceBarTitle(string TaskName, string TaskType, float TotalCost, string Currency)
+        {
+            string title = $"|                          {TaskType} {TaskName}";
+            string costTitle = $"|                         Total cost: {TotalCost}{Currency}";
+
+            Print("_____________________________________________________________________\n");
+            PrintWordWithEmptySpace(title, 68); Print("\n");
+            PrintWordWithEmptySpace(costTitle, 68); Print("\n");
+
+            Print("|");
+            PrintWordWithEmptySpace("Resource name", 21);
+            PrintWordWithEmptySpace("Capacity", 11);
+            PrintWordWithEmptySpace("Type", 10);
+            PrintWordWithEmptySpace("Accure", 10);
+            PrintWordWithEmptySpace("Cost", 11);
+        }
+
+        public void PrintWordWithEmptySpace(string word, int MaximumEmptySpace)
+        {
+            string space = "";
+            int NumOfSpace = MaximumEmptySpace >= word.Length ? MaximumEmptySpace - word.Length : 0;
+
+            for(int i = 1; i <= NumOfSpace; ++i)
+            {
+                space += " ";
+            }
+
+            Print($"{word}{space}|");
         }
 
         private void Print(string text)
@@ -2164,98 +2245,53 @@ namespace C__Project_1
             }
         }
 
-        public void PrintAllInfo()
+        public void PrintAllVerticesInfo()
         {
-            if (Start.ES != DateTime.MinValue && Start.EF != DateTime.MinValue)
-            {
-                Print($"vertex: {Start.TaskName}\n");
-                Print($"Duration = {Start.Duration}\n");
-                Print($"{Start.TaskName}.ES = {Start.EarliestStart}\n");
-                Print($"{Start.TaskName}.EF = {Start.EarliestEnd}\n");
-                Print($"{Start.TaskName}.LS = {Start.LatestStart}\n");
-                Print($"{Start.TaskName}.LF = {Start.LatestEnd}\n");
-                Print($"Earliest Start Date: {Start.ES}\n");
-                Print($"Earliest Finish Date: {Start.EF}\n");
-                Print($"Latest Start Date: {Start.LS}\n");
-                Print($"Latest Finish Date: {Start.LF}\n");
-                Print($"Total Float = {Start.TotalFloat}\n");
-
-                Print("Depending: ");
-                foreach (KeyValuePair<string, TypeLag> v in Start.Depending_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
-
-                Print("\nDepended: ");
-                foreach (KeyValuePair<string, TypeLag> v in Start.Depended_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
-                Print("\n\n");
-            }
-
+            //PrintVertexInfo(Start); Print("\n");
             foreach (KeyValuePair<string, Vertex> vertex in vertices)
             {
-                Print($"vertex: {vertex.Key}\n");
-                Print($"Duration = {vertex.Value.Duration}\n");
-                Print($"{vertex.Key}.ES = {vertex.Value.EarliestStart}\n");
-                Print($"{vertex.Key}.EF = {vertex.Value.EarliestEnd}\n");
-                Print($"{vertex.Key}.LS = {vertex.Value.LatestStart}\n");
-                Print($"{vertex.Key}.LF = {vertex.Value.LatestEnd}\n");
-                Print($"Earliest Start Date: {vertex.Value.ES}\n");
-                Print($"Earliest Finish Date: {vertex.Value.EF}\n");
-                Print($"Latest Start Date: {vertex.Value.LS}\n");
-                Print($"Latest Finish Date: {vertex.Value.LF}\n");
-                Print($"Total Float = {vertex.Value.TotalFloat}\n");
+                PrintVertexInfo(vertex.Value);
+                Print("\n");
+            }
+            //PrintVertexInfo(End); Print("\n");
+        }
 
-                Print("Depending: ");
-                foreach (KeyValuePair<string, TypeLag> v in vertex.Value.Depending_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
+        public void PrintVertexInfo(Vertex vertex)
+        {
+            Print($"vertex: {vertex.TaskName}\n");
+            Print($"Duration = {vertex.Duration}\n");
+            Print($"{vertex.TaskName}.ES = {vertex.EarliestStart}\n");
+            Print($"{vertex.TaskName}.EF = {vertex.EarliestEnd}\n");
+            Print($"{vertex.TaskName}.LS = {vertex.LatestStart}\n");
+            Print($"{vertex.TaskName}.LF = {vertex.LatestEnd}\n");
+            Print($"Earliest Start Date: {vertex.ES.ToString("MM/dd/yyyy")}\n");
+            Print($"Earliest Finish Date: {vertex.EF.ToString("MM/dd/yyyy")}\n");
+            Print($"Latest Start Date: {vertex.LS.ToString("MM/dd/yyyy")}\n");
+            Print($"Latest Finish Date: {vertex.LF.ToString("MM/dd/yyyy")}\n");
+            Print($"Total Float = {vertex.TotalFloat}\n");
 
-                Print("\nDepended: ");
-                foreach (KeyValuePair<string, TypeLag> v in vertex.Value.Depended_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
-                Print("\n\n");
+            Print("Depending: ");
+            foreach (KeyValuePair<string, TypeLag> v in vertex.Depending_vertices)
+            {
+                Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
             }
 
-            if (End.LS != DateTime.MinValue && End.LF != DateTime.MinValue)
+            Print("\nDepended: ");
+            foreach (KeyValuePair<string, TypeLag> v in vertex.Depended_vertices)
             {
-                Print($"vertex: {End.TaskName}\n");
-                Print($"Duration = {End.Duration}\n");
-                Print($"{End.TaskName}.ES = {End.EarliestStart}\n");
-                Print($"{End.TaskName}.EF = {End.EarliestEnd}\n");
-                Print($"{End.TaskName}.LS = {End.LatestStart}\n");
-                Print($"{End.TaskName}.LF = {End.LatestEnd}\n");
-                Print($"Earliest Start Date: {End.ES}\n");
-                Print($"Earliest Finish Date: {End.EF}\n");
-                Print($"Latest Start Date: {End.LS}\n");
-                Print($"Latest Finish Date: {End.LF}\n");
-                Print($"Total Float = {End.TotalFloat}\n");
-
-                Print("Depending: ");
-                foreach (KeyValuePair<string, TypeLag> v in End.Depending_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
-
-                Print("\nDepended: ");
-                foreach (KeyValuePair<string, TypeLag> v in End.Depended_vertices)
-                {
-                    Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
-                }
-                Print("\n\n");
+                Print($"{v.Key}-{v.Value.Type}{v.Value.Lag} ");
             }
+            Print("\n");
+        }
 
-            Queue<string> topo = SortTopology();
+        public void PrintTopologyInfo()
+        {
+            Queue<string> Topology = SortTopology();
 
-            Print("\n\nTopo sort: ");
-            foreach (string s in topo)
+            Print("Topo sort: ");
+            foreach (string vertex in Topology)
             {
-                Print($"{s} ");
+                Print($"{vertex} ");
             }
             Print("\n");
         }
@@ -2297,40 +2333,44 @@ namespace C__Project_1
         }
     }
 
-    class GanttChart
+    class GanttChart : IPrintWordWithEmptySpace
     {
         public PDMDiGraph Graph = new PDMDiGraph();
         private TreeOfTasks Tree;
         public List<string> TasksWithOrder = new List<string>();
         public Dictionary<string, GanttChartBar> TaskBars = new Dictionary<string, GanttChartBar>();
+        private int LowestBarLevel;
 
         public GanttChart(TreeOfTasks Tree)
         {
             this.Tree = Tree;
             bool HasDependencies = true;
+            List<string> TopoSort = new List<string>();
 
             if (Tree.Dependencies.Count == 0)
             {
                 HasDependencies = false;
                 Print("No dependencies found!\n");
             }
-
-            List<string> TopoSort = new List<string>();
-
-            if (HasDependencies)
+            else
             {
                 BuildPDMGraph();
                 if (Graph.vertices.Count == 0) return;
                 else TopoSort = TopoSortForChart();
             }
 
-            Print("array of Tasks before adding subtasks without dependencies: ");
+            Print("Array of tasks before adding subtasks without dependencies: ");
             foreach (string task in TopoSort)
             {
                 Print($"{task} ");
             }
             Print("\n\n");
 
+            BuildGanttChart(HasDependencies, TopoSort);
+        }
+
+        private void BuildGanttChart(bool HasDependencies, List<string> TopoSort)
+        {
             LinkedList<string> tasksWithOrder = new LinkedList<string>(TopoSort);
             List<string> subtasksWithoutDependency = SubtasksWithoutDependency();
 
@@ -2342,15 +2382,22 @@ namespace C__Project_1
             string[] array = new string[tasksWithOrder.Count];
             tasksWithOrder.CopyTo(array, 0);
 
-            Print("array of Tasks after adding subtasks without dependencies: ");
+            int level = FindLongestIDlength(tasksWithOrder) - 1;
+            LowestBarLevel = level + 1;
+            Dictionary<int, List<string>> levelWithTasks = LevelInTreeWithItsTasksExceptSubtasks();
+
+            Print("Array of tasks after adding subtasks without dependencies: ");
             foreach (string task in array)
             {
-                Print($"{task} ");
+                if(!TopoSort.Contains(task))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Print($"{task} ");
+                    Console.ResetColor();
+                }
+                else Print($"{task} ");
             }
             Print("\n\n");
-
-            int level = FindLongestIDlength(tasksWithOrder) - 1;
-            Dictionary<int, List<string>> levelWithTasks = LevelInTreeWithItsTasksExceptSubtasks();
 
             while (level > 0)
             {
@@ -2358,10 +2405,16 @@ namespace C__Project_1
                 {
                     array = AddSummaryTaskToTopo(task, array);
 
-                    Print("tasks in array now is: ");
-                    foreach (string tsk in array)
+                    Print($"Tasks in array after adding task {task}: ");
+                    foreach (string taskArray in array)
                     {
-                        Print($"{tsk} ");
+                        if(taskArray == task)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Print($"{taskArray} ");
+                            Console.ResetColor();
+                        }
+                        else Print($"{taskArray} ");
                     }
                     Print("\n\n");
                 }
@@ -2369,19 +2422,25 @@ namespace C__Project_1
                 --level;
             }
 
-            TasksWithOrder = new List<string>(array);
+            CreateTasksOrderAndTaskBars(array);
+        }
 
-            foreach (string task in array)
+        private void CreateTasksOrderAndTaskBars(string[] ArrayOfTasksWithOrder)
+        {
+            TasksWithOrder = new List<string>(ArrayOfTasksWithOrder);
+            AddTaskToTaskBars(ArrayOfTasksWithOrder);
+            BuildTaskBars();
+        }
+
+        private void AddTaskToTaskBars(string[] ArrayOfTasksWithOrder)
+        {
+            foreach (string task in ArrayOfTasksWithOrder)
             {
                 if (!TaskBars.ContainsKey(task))
                 {
                     TaskBars.Add(task, new GanttChartBar(task));
                 }
             }
-
-            BuildTaskBars();
-            PrintInfoOfAllTaskBars();
-            PrintTasksOrder();
         }
 
         private void BuildTaskBars()
@@ -2402,8 +2461,6 @@ namespace C__Project_1
                 task.Value.PercentageCompleted = TaskNode.PercentageCompleted;
                 task.Value.ResourceAndCapacity = TaskNode.ResourceAndCapacityDic;
 
-                //initial
-
                 task.Value.InitialStartDate = TaskNode.StartDate;
                 task.Value.InitialFinishDate = TaskNode.EndDate;
 
@@ -2412,8 +2469,6 @@ namespace C__Project_1
                     task.Value.InitialDepending_vertices = Tree.graph.vertices[task.Key].Depending_vertices;
                     task.Value.InitialDepended_vertices = Tree.graph.vertices[task.Key].Depended_vertices;
                 }
-
-                //after
 
                 if (Graph.vertices.ContainsKey(task.Key))
                 {
@@ -2432,8 +2487,6 @@ namespace C__Project_1
                     task.Value.Depended_vertices = task.Value.InitialDepended_vertices;
                 }
 
-                //float
-
                 if (Graph.CheckIfVertexExists(task.Key))
                 {
                     task.Value.TotalFloat = Graph.vertices[task.Key].TotalFloat;
@@ -2450,11 +2503,20 @@ namespace C__Project_1
         {
             bool build = true;
 
+            if(Tree.TaskNameandIDDic.Count == 1)
+            {
+                Console.Write("Cannot create Gantt Chart because no task exists!\n");
+                return false;
+            }
+
             foreach (KeyValuePair<string, string> Task in Tree.TaskNameandIDDic)
             {
                 if (!Tree.AlreadySettingTimeline(Task.Key))
                 {
                     build = false;
+                    Console.Write($"Timeline of {Task.Key} has not been set!\n");
+                    Console.Write("Cannot create Gantt Chart!\n");
+                    break;
                 }
             }
 
@@ -2478,17 +2540,6 @@ namespace C__Project_1
                 }
                 else
                 {
-                    foreach (string task in leafTasks)
-                    {
-                        if (!Tree.AlreadySettingTimeline(task))
-                        {
-                            Print($"Timeline of task {task} has not been set!\n");
-                            Print($"Cannot create Gantt Chart!\n");
-                            Graph = new PDMDiGraph();
-                            return;
-                        }
-                    }
-
                     earliestLeafTasks = Tree.EarliestTasks(leafTasks);
                     latestLeafTasks = Tree.LatestTasks(leafTasks);
                 }
@@ -2509,17 +2560,6 @@ namespace C__Project_1
                     }
                     else
                     {
-                        foreach (string task in dependingLeafTasks)
-                        {
-                            if (!Tree.AlreadySettingTimeline(task))
-                            {
-                                Print($"Timeline of {task} has not been set!\n");
-                                Print("Cannot create Gantt Chart!\n");
-                                Graph = new PDMDiGraph();
-                                return;
-                            }
-                        }
-
                         earliestDependingLeafTasks = Tree.EarliestTasks(dependingLeafTasks);
                         latestDependingLeafTasks = Tree.LatestTasks(dependingLeafTasks);
                     }
@@ -2688,14 +2728,13 @@ namespace C__Project_1
             {
                 string ID = Tree.GetTaskID(array[i]);
 
-                if (ID.Length > TaskID.Length && TaskID == ID.Substring(0, TaskID.Length) && !repeat) //ID.Length > 1 && TaskID == ID.Substring(0, ID.Length - 1) && !repeat
+                if (ID.Length > TaskID.Length && TaskID == ID.Substring(0, TaskID.Length) && !repeat) 
                 {
                     indices.Add(i + plus);
                     ++plus;
                     repeat = true;
                 }
                 else if (!(ID.Length > TaskID.Length && TaskID == ID.Substring(0, TaskID.Length) && repeat)) repeat = false;
-                //ID.Length > 1 && TaskID == ID.Substring(0, ID.Length - 1) && repeat
             }
 
             string[] newArray = new string[array.Length + indices.Count];
@@ -2744,7 +2783,11 @@ namespace C__Project_1
                 if (ID.Value.SubTaskIDS.Count > 0 && ID.Key != "0")
                 {
                     int IDlength = ID.Key.Length;
-                    if (!dic.ContainsKey(IDlength)) dic.Add(IDlength, new List<string>());
+
+                    if (!dic.ContainsKey(IDlength))
+                    {
+                        dic.Add(IDlength, new List<string>());
+                    }
 
                     dic[IDlength].Add(Tree.GetTaskNameFromID(ID.Key));
                 }
@@ -2793,7 +2836,7 @@ namespace C__Project_1
                 LinkedListNode<string>? current = linkedList.Find(chosen);
                 if (current == null)
                 {
-                    Print($"Cannot find the chose task {chosen}!\n");
+                    Print($"Cannot find the chosen task {chosen}!\n");
                     return;
                 }
                 else linkedList.AddBefore(current, TaskName);
@@ -2914,8 +2957,26 @@ namespace C__Project_1
             return value;
         }
 
-        public void PrintTasksOrder()
+        public void PrintDetailedInfoOfAllTasks()
         {
+            PrintTasksOrderWithBasicInfo();Print("\n\n");
+
+            foreach(KeyValuePair<string, GanttChartBar> Task in TaskBars)
+            {
+                PrintDependencyInfoOfTask(Task.Key); Print("\n\n");
+            }
+
+            PrintResourceTaskBarTitle(); Print("\n");
+            foreach (KeyValuePair<string, GanttChartBar> Task in TaskBars)
+            {
+                ResourceInfoOfTask(Task.Key); Print("\n");
+            }
+        }
+
+        public void PrintTasksOrderWithBasicInfo()
+        {
+            PrintBasicTaskBarTitle(); Print("\n");
+
             foreach (string task in TasksWithOrder)
             {
                 string emptySpace = "";
@@ -2926,71 +2987,152 @@ namespace C__Project_1
                     emptySpace += " ";
                 }
 
-                Print($"{emptySpace}{task}\n");
+                Print($"|{emptySpace}");
+                BasicInfoOfTask(task); Print("\n");
             }
         }
 
-        public void PrintInfoOfAllTaskBars()
+        public void PrintBasicInfoOfTask(string TaskName)
         {
-            foreach (KeyValuePair<string, GanttChartBar> TaskBar in TaskBars)
-            {
-                PrintInfoOfTaskBar(TaskBar.Key);
-                Print("\n");
-            }
+            PrintBasicTaskBarTitle(); Print("\n|");
+            BasicInfoOfTask(TaskName); Print("\n");
         }
 
-        public void PrintInfoOfTaskBar(string TaskName)
+        private void BasicInfoOfTask(string TaskName)
         {
             GanttChartBar TaskBar = TaskBars[TaskName];
+            int bonusLength = LowestBarLevel - Tree.GetTaskID(TaskName).Length;
 
-            Print($"Task name: {TaskBar.TaskName}\n");
-
-            Print($"Initial start date: {TaskBar.InitialStartDate}\n");
-            Print($"Start date: {TaskBar.StartDate}\n");
-            Print($"Initial finish date: {TaskBar.InitialFinishDate}\n");
-            Print($"Finish date: {TaskBar.FinishDate}\n");
-            Print($"Duration: {TaskBar.Duration}\n");
-
-            Print($"Priority: {TaskBar.Priority}\n");
-            Print($"Bar level: {TaskBar.BarLevel}\n");
-            Print($"Status: {TaskBar.Status}\n");
-            Print($"Percentage complete: {TaskBar.PercentageCompleted}\n");
-
-            if (Graph.CheckIfVertexExists(TaskBar.TaskName))
+            if(Graph.vertices.ContainsKey(TaskName))
             {
-                Print($"Critical: {TaskBar.Critical}\n");
-                Print($"Total float: {TaskBar.TotalFloat}\n");
+                if(TaskBar.Critical) Console.ForegroundColor = ConsoleColor.Red;
+                else Console.ForegroundColor = ConsoleColor.Blue;
             }
 
-            Print("Initial depending: ");
+            PrintWordWithEmptySpace(TaskBar.TaskName, 30 + bonusLength);
+            PrintWordWithEmptySpace(TaskBar.Duration.ToString(), 10);
+            PrintWordWithEmptySpace(TaskBar.StartDate.ToString("MM/dd/yyyy"), 13);
+            PrintWordWithEmptySpace(TaskBar.FinishDate.ToString("MM/dd/yyyy"), 13);
+            PrintWordWithEmptySpace(TaskBar.Status, 13);
+            PrintWordWithEmptySpace(TaskBar.Priority, 10);
+            PrintWordWithEmptySpace(TaskBar.PercentageCompleted.ToString(), 21);
+
+            if (Graph.vertices.ContainsKey(TaskName)) PrintWordWithEmptySpace(TaskBar.TotalFloat.ToString(), 12);
+            else PrintWordWithEmptySpace("           ", 12);
+
+            Console.ResetColor();
+        }
+
+        public void PrintDependencyInfoOfTask(string TaskName)
+        {
+            int len = 58;
+            GanttChartBar TaskBar = TaskBars[TaskName];
+
+            string InitialPreString = "";
+            string CurrentPreString = "";
+            string InitialSucString = "";
+            string CurrentSucString = "";
+
             foreach (KeyValuePair<string, TypeLag> dependingTask in TaskBar.InitialDepending_vertices)
             {
-                Print($"{dependingTask.Key} ");
+                InitialPreString += dependingTask.Key + "-" + dependingTask.Value.Type + dependingTask.Value.Lag + " ";
             }
 
-            Print("\nDepending: ");
             foreach (KeyValuePair<string, TypeLag> dependingTask in TaskBar.Depending_vertices)
             {
-                Print($"{dependingTask.Key} ");
+                CurrentPreString += dependingTask.Key + "-" + dependingTask.Value.Type + dependingTask.Value.Lag + " ";
             }
 
-            Print("\nInitial depended: ");
             foreach (KeyValuePair<string, TypeLag> dependedTask in TaskBar.InitialDepended_vertices)
             {
-                Print($"{dependedTask.Key} ");
+                InitialSucString += dependedTask.Key + "-" + dependedTask.Value.Type + dependedTask.Value.Lag + " ";
             }
 
-            Print("\nDepended: ");
             foreach (KeyValuePair<string, TypeLag> dependedTask in TaskBar.Depended_vertices)
             {
-                Print($"{dependedTask.Key} ");
+                CurrentSucString += dependedTask.Key + "-" + dependedTask.Value.Type + dependedTask.Value.Lag + " ";
             }
 
-            Print("\nResources and capacity:\n");
-            foreach (KeyValuePair<string, int> resource in TaskBar.ResourceAndCapacity)
+            if (InitialPreString == "") InitialPreString = "none";
+            if (CurrentPreString == "") CurrentPreString = "none";
+            if (InitialSucString == "") InitialSucString = "none";
+            if (CurrentSucString == "") CurrentSucString = "none";
+
+            Print("_______________________________________________________________________________________________________________________\n");
+            string title = $"|                                                         {TaskName}";
+
+            PrintWordWithEmptySpace(title, len * 2 + 2);
+            Print("\n|");
+            PrintWordWithEmptySpace("Initial predecessors", len);
+            PrintWordWithEmptySpace("Current predecessors", len);
+
+            Print("\n|");
+            PrintWordWithEmptySpace(InitialPreString, len);
+            PrintWordWithEmptySpace(CurrentPreString, len);
+
+            Print("\n|");
+            PrintWordWithEmptySpace("Initial successors", len);
+            PrintWordWithEmptySpace("Current successors", len);
+
+            Print("\n|");
+            PrintWordWithEmptySpace(InitialSucString, len);
+            PrintWordWithEmptySpace(CurrentSucString, len); Print("\n");
+        }
+
+        public void PrintResourceInfoOfTask(string TaskName)
+        {
+            PrintResourceTaskBarTitle(); Print("\n");
+            ResourceInfoOfTask(TaskName); Print("\n");
+        }
+
+        private void ResourceInfoOfTask(string TaskName)
+        {
+            GanttChartBar TaskBar = TaskBars[TaskName];
+            string ResourceString = "";
+
+            foreach(KeyValuePair<string, int> resource in TaskBar.ResourceAndCapacity)
             {
-                Print($"+{resource.Key}: {resource.Value}\n");
+                ResourceString += resource.Key + "-" + resource.Value + " ";
             }
+
+            Print("|");
+            PrintWordWithEmptySpace(TaskName, 30);
+            PrintWordWithEmptySpace(ResourceString, 87);
+        }
+
+        private void PrintBasicTaskBarTitle()
+        {
+            Print("_____________________________________________________________________________________________________________________________________\n");
+            Print("|");
+            PrintWordWithEmptySpace("Task Name", 30 + LowestBarLevel - 1);
+            PrintWordWithEmptySpace("Duration", 10);
+            PrintWordWithEmptySpace("Start Date", 13);
+            PrintWordWithEmptySpace("Finish Date", 13);
+            PrintWordWithEmptySpace("Status", 13);
+            PrintWordWithEmptySpace("Priority", 10);
+            PrintWordWithEmptySpace("Percentage complete", 21);
+            PrintWordWithEmptySpace("Total float", 12);
+        }
+
+        private void PrintResourceTaskBarTitle()
+        {
+            Print("________________________________________________________________________________________________________________________\n");
+            Print("|");
+            PrintWordWithEmptySpace("Task Name", 30);
+            PrintWordWithEmptySpace("Resource and Capacity", 87);
+        }
+
+        public void PrintWordWithEmptySpace(string word, int MaximumEmptySpace)
+        {
+            string space = "";
+            int NumOfSpace = MaximumEmptySpace >= word.Length ? MaximumEmptySpace - word.Length : 0;
+
+            for (int i = 1; i <= NumOfSpace; ++i)
+            {
+                space += " ";
+            }
+
+            Print($"{word}{space}|");
         }
 
         private void Print(string text)
@@ -3023,8 +3165,7 @@ namespace C__Project_1
             if (GanttChart.CanBuildGanttChart(ProjectTree))
             {
                 ProjectGanttChart = new GanttChart(ProjectTree);
-
-                if(ProjectGanttChart.Graph.vertices.Count == 0) Print("Create/Update Gantt Chart failed!\n");
+                if(ProjectGanttChart.TasksWithOrder.Count == 0) Print("Create/Update Gantt Chart failed!\n");
             }
             else Print("Create/Update Gantt Chart failed!\n");
         }
@@ -3146,6 +3287,11 @@ namespace C__Project_1
         public void PrintInformationOfTask(string TaskName)
         {
             ProjectTree.PrintInfoOfTask(TaskName);
+        }
+
+        public void PrintDescriptionOfTask(string TaskName)
+        {
+            ProjectTree.PrintTaskDescription(TaskName);
         }
 
         public void AddWorkResource(string ResourceName)
@@ -3310,8 +3456,8 @@ namespace C__Project_1
             Tree.AddDependency("C3", "C2", "FS");
             Tree.AddDependency("C4", "C3", "FF");
 
-            ////Print("\n\n");
-            ////Tree.PrintAllTasksInfo();
+            //Print("\n\n");
+            //Tree.PrintAllTasksInfo();
 
             Tree.AddLagToDependency("A12", "A2", 2);
             Tree.AddLagToDependency("A32", "A31", 1);
@@ -3330,9 +3476,11 @@ namespace C__Project_1
             Tree.UpdateStatus("A32", "Complete");
 
             Print("\n\n");
-            Tree.PrintAllTasksInfo();
+            Tree.PrintAllTasksInfo(); Print("\n\n");
 
             GanttChart Chart = new GanttChart(Tree);
+            //Chart.PrintTasksOrderWithBasicInfo();
+            Chart.PrintDetailedInfoOfAllTasks();
         }
 
         static void Print(string text)
