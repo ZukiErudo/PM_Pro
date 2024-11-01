@@ -1102,37 +1102,25 @@ namespace C__Project_1
                         {
                             if(Type == "SS" && DependingTask.Status == "Not start")
                             {
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
                             else if(Type == "FS" && DependingTask.Status != "Complete")
                             {
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
                         }
                         else
                         {
                             if (Type == "SS" && !(CurrentDate >= DependingTask.StartDate.AddDays(Lag) && CurrentDate >= Task.StartDate))
-                            {//DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
-                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "Start", "Start");
                                 return;
                             }
                             else if (Type == "FS" && !(DependingTask.Status == "In progress" && CurrentDate >= DependingTask.EndDate.AddDays(1 + Lag) && CurrentDate >= Task.StartDate))
-                            {//DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(1 + Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
-                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "End", "Start");
                                 return;
                             }
                         }
@@ -1159,57 +1147,35 @@ namespace C__Project_1
                         {
                             if((Type == "SS" || Type == "SF") && DependingTask.Status == "Not start")
                             {
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
                             else if((Type == "FF" || Type == "FS") && DependingTask.Status != "Complete")
                             {
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
                         }
                         else
                         {
                             if (Type == "SF" && !(CurrentDate >= DependingTask.StartDate.AddDays(Lag) && CurrentDate >= Task.EndDate))
-                            {//DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task .EndDate) >= 0
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
-                                Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "Start", "End");
                                 return;
                             }
                             else if (Type == "SS" && !(CurrentDate >= DependingTask.StartDate.AddDays(Lag) && CurrentDate >= Task.StartDate))
-                            {//DateTime.Compare(CurrentDate, DependingTask.StartDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate: {DependingTask.StartDate}\n");
-                                Print($"DependingTask {depending.Key} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
-                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "Start", "Start");
                                 return;
                             }
                             else if (Type == "FF" && !(DependingTask.Status == "In progress" && CurrentDate >= DependingTask.EndDate.AddDays(Lag) && CurrentDate >= Task.EndDate))
-                            {//(DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.EndDate) >= 0)
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag)}\n");
-                                Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "End", "End");
                                 return;
                             }
                             else if (Type == "FS" && !(DependingTask.Status == "In progress" && CurrentDate >= DependingTask.EndDate.AddDays(1 + Lag) && CurrentDate >= Task.StartDate))
-                            {//(DateTime.Compare(CurrentDate, DependingTask.EndDate.AddDays(1 + Lag)) >= 0 && DateTime.Compare(CurrentDate, Task.StartDate) >= 0)
-                                Print($"Cannot set the status of {TaskName} to {Status} because of dependency {depending.Key} -> {TaskName} type {Type}{Lag}!\n");
-                                Print($"Depending task {depending.Key} status: {DependingTask.Status}\n");
-                                Print($"Current Date: {CurrentDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate: {DependingTask.EndDate}\n");
-                                Print($"DependingTask {depending.Key} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
-                                Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+                            {
+                                PrintStatusError(TaskName, depending.Key, Status, Type, Lag, true, "End", "Start");
                                 return;
                             }
                         }
@@ -1220,6 +1186,34 @@ namespace C__Project_1
             Task.Status = Status;
             UpdateStatusToParentTaskOfTask(TaskName);
             if (Status == "Complete") UpdatePercentageComplete(TaskName, 100);
+        }
+
+        private void PrintStatusError(string TaskName, string DependingTaskName, string Status, string Type, int Lag, bool PrintCurrentDate = false, string DependingTaskDate = "", string TaskDate = "")
+        {
+            Task? Task = FindTaskNode(TaskName);
+            Task? DependingTask = FindTaskNode(DependingTaskName);
+            if (Task == null || DependingTask == null) return;
+
+            Print($"Cannot set the status of {TaskName} to {Status} because of dependency {DependingTaskName} -> {TaskName} type {Type}{Lag}!\n");
+            Print($"Depending task {DependingTaskName} status: {DependingTask.Status}\n");
+
+            if(PrintCurrentDate) Print($"Current Date: {CurrentDate}\n");
+
+            if(DependingTaskDate == "Start")
+            {
+                Print($"DependingTask {DependingTaskName} StartDate: {DependingTask.StartDate}\n");
+                Print($"DependingTask {DependingTaskName} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag)}\n");
+            }
+            else if(DependingTaskDate == "End")
+            {
+                Print($"DependingTask {DependingTaskName} EndDate: {DependingTask.EndDate}\n");
+
+                if(Type == "FF") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag)}\n");
+                else if(Type == "FS") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag)}\n");
+            }
+
+            if(TaskDate == "Start") Print($"Task {TaskName} StartDate: {Task.StartDate}\n");
+            else if (TaskDate == "End") Print($"Task {TaskName} EndDate: {Task.EndDate}\n");
         }
 
         private void UpdateStatusToParentTaskOfTask(string TaskName)
@@ -3308,6 +3302,7 @@ namespace C__Project_1
             Tree.AddDependency("A33", "A32", "FS");
 
             Tree.AddDependency("B", "A", "FS");
+            //Tree.AddDependency("A33", "B1", "FS");
 
             Tree.AddDependency("C", "B", "FF");
 
