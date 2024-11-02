@@ -84,6 +84,7 @@ namespace C__Project_1
                 WorkResourceList.Add(name, new WorkResource(name));
                 WorkResourceList[name].Currency = Currency;
             }
+            else Print($"Resource with name {name} already exists!\n");
         }
 
         public void AddNewMaterialResource(string name)
@@ -94,6 +95,7 @@ namespace C__Project_1
                 MaterialResourceList.Add(name, new MaterialResource(name));
                 MaterialResourceList[name].Currency = Currency;
             }
+            else Print($"Resource with name {name} already exists!\n");
         }
 
         public void ChangeWorkResourceName(string currentName, string newName)
@@ -105,6 +107,7 @@ namespace C__Project_1
                 WorkResourceList[newName].ResourceName = newName;
                 WorkResourceList.Remove(currentName);
             }
+            else Print($"Cannot change because the current name {currentName} does not exist or the new name {newName} already exists!\n");
         }
 
         public void ChangeMaterialResourceName(string currentName, string newName)
@@ -116,46 +119,37 @@ namespace C__Project_1
                 MaterialResourceList[newName].ResourceName = newName;
                 MaterialResourceList.Remove(currentName);
             }
+            else Print($"Cannot change because the current name {currentName} does not exist or the new name {newName} already exists!\n");
         }
 
         public void DeleteWorkResource(string name)
         {
-            if (CheckIfWorkResourceExists(name))
-            {
-                WorkResourceList.Remove(name);
-            }
+            if (CheckIfWorkResourceExists(name)) WorkResourceList.Remove(name);
+            else Print($"Cannot delete resource {name} because it does not exist!\n");
         }
 
         public void DeleteMaterialResource(string name)
         {
-            if (CheckIfMaterialResourceExists(name))
-            {
-                MaterialResourceList.Remove(name);
-            }
+            if (CheckIfMaterialResourceExists(name)) MaterialResourceList.Remove(name);
+            else Print($"Cannot delete resource {name} because it does not exist!\n");
         }
 
         public void SetStandardRateOfWorkResource(string name, float StdRate)
         {
-            if (CheckIfWorkResourceExists(name) && StdRate >= 0)
-            {
-                WorkResourceList[name].StandardRate = StdRate;
-            }
+            if (CheckIfWorkResourceExists(name) && StdRate >= 0) WorkResourceList[name].StandardRate = StdRate;
+            else Print($"Cannot set standard rate because the resource {name} does not exist or the value of standatd rate is less than 0!\n");
         }
 
         public void SetStandardRateOfMaterialResource(string name, float StdRate)
         {
-            if (CheckIfMaterialResourceExists(name) && StdRate >= 0)
-            {
-                MaterialResourceList[name].StandardRate = StdRate;
-            }
+            if (CheckIfMaterialResourceExists(name) && StdRate >= 0) MaterialResourceList[name].StandardRate = StdRate;
+            else Print($"Cannot set standard rate because the resource {name} does not exist or the value of standatd rate is less than 0!\n");
         }
 
         public void SetOvertimeRateOfWorkResource(string name, float OvertimeRate)
         {
-            if (CheckIfWorkResourceExists(name) && OvertimeRate >= 0)
-            {
-                WorkResourceList[name].OvertimeRate = OvertimeRate;
-            }
+            if (CheckIfWorkResourceExists(name) && OvertimeRate >= 0) WorkResourceList[name].OvertimeRate = OvertimeRate;
+            else Print($"Cannot set overtime rate because the resource {name} does not exist or the value of overtime rate is less than 0!\n");
         }
 
         public void SetCurrencyForAllResources(string Currency)
@@ -175,34 +169,27 @@ namespace C__Project_1
 
         public void SetMaximumWorkingHoursPerDayOfWorkResource(string name, float hours)
         {
-            if (CheckIfWorkResourceExists(name) && hours >= 0 && hours <= 24)
-            {
-                WorkResourceList[name].MaximumWorkingHoursPerDay = hours;
-            }
+            if (CheckIfWorkResourceExists(name) && hours >= 0 && hours <= 24) WorkResourceList[name].MaximumWorkingHoursPerDay = hours;
+            else Print($"Cannot set maximum working hours per day because the resource {name} does not exist or the value of hours is outside of range [0, 24]!\n");
         }
 
         public void SetAvailableCapacityOfWorkResource(string name, int capacity)
         {
-            if (CheckIfWorkResourceExists(name) && capacity >= 1)
-            {
-                WorkResourceList[name].AvailableCapacity = capacity;
-            }
+            if (CheckIfWorkResourceExists(name) && capacity >= 1) WorkResourceList[name].AvailableCapacity = capacity;
+            else Print($"Cannot set capacity because the resource {name} does not exist or the value of capacity is less than 1!\n");
         }
 
         public void SetRateUnitOfMaterialResource(string name, string RateUnit)
         {
-            if (CheckIfMaterialResourceExists(name))
-            {
-                MaterialResourceList[name].RateUnit = RateUnit;
-            }
+            if (CheckIfMaterialResourceExists(name)) MaterialResourceList[name].RateUnit = RateUnit;
+            else Print($"Cannot set rate unit because the reource {name} does not exist!\n");
         }
 
         public void SetAccrueOfWorkResource(string name, string AccrueType)
         {
-            if (CheckIfWorkResourceExists(name) && (AccrueType == "Start" || AccrueType == "Prorated" || AccrueType == "End"))
-            {
-                WorkResourceList[name].Accrue = AccrueType;
-            }
+            if (CheckIfWorkResourceExists(name) && (AccrueType == "Start" || AccrueType == "Prorated" || AccrueType == "End")) WorkResourceList[name].Accrue = AccrueType;
+            else if (!CheckIfWorkResourceExists(name)) Print($"Cannot set accure because the resource {name} does not exist!\n");
+            else Print("Please choose the accrue type: Start/Prorated/End\n");
         }
 
         public bool CheckIfWorkResourceExists(string name)
@@ -217,18 +204,14 @@ namespace C__Project_1
 
         public void PrintInfoOfWorkResource(string name)
         {
-            if (WorkResourceList.ContainsKey(name))
-            {
-                WorkResourceList[name].PrintInfo();
-            }
+            if (WorkResourceList.ContainsKey(name)) WorkResourceList[name].PrintInfo();
+            else Print($"Cannot print info because the resource {name} does not exist!\n");
         }
 
         public void PrintInfoOfMaterialResource(string name)
         {
-            if (MaterialResourceList.ContainsKey(name))
-            {
-                MaterialResourceList[name].PrintInfo();
-            }
+            if (MaterialResourceList.ContainsKey(name)) MaterialResourceList[name].PrintInfo();
+            else Print($"Cannot print info because the resource {name} does not exist!\n");
         }
 
         private void Print(string text)
