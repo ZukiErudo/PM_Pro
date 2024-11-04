@@ -8,7 +8,6 @@ using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Transactions;
 using System.Xml.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace C__Project_1
 {
@@ -3163,9 +3162,16 @@ namespace C__Project_1
             ProjectTree.AddSubtaskToTask(SubtaskName, TaskName);
         }
 
+        public void ChangeProjectName(string CurrentProjectName, string NewProjectName)
+        {
+            if (CurrentProjectName == ProjectTree.RootTask.TaskName) ProjectTree.ChangeTaskName(CurrentProjectName, NewProjectName);
+            else Print($"Project name {CurrentProjectName} not found!\n");
+        }
+
         public void ChangeTaskName(string CurrentTaskName, string NewTaskName)
         {
-            ProjectTree.ChangeTaskName(CurrentTaskName, NewTaskName);
+            if (CurrentTaskName != ProjectTree.RootTask.TaskName) ProjectTree.ChangeTaskName(CurrentTaskName, NewTaskName);
+            else Print("Cannot change Project's name!\n");
         }
 
         public void DeleteTask(string TaskName)
