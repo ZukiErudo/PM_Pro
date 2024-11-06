@@ -155,12 +155,12 @@ namespace C__Project_1
         {
             this.Currency = Currency;
 
-            foreach(KeyValuePair<string, WorkResource> resource in WorkResourceList)
+            foreach (KeyValuePair<string, WorkResource> resource in WorkResourceList)
             {
                 resource.Value.Currency = Currency;
             }
 
-            foreach(KeyValuePair<string, MaterialResource> resource in MaterialResourceList)
+            foreach (KeyValuePair<string, MaterialResource> resource in MaterialResourceList)
             {
                 resource.Value.Currency = Currency;
             }
@@ -801,6 +801,7 @@ namespace C__Project_1
                     if (Type == "SS")
                     {
                         newSpan = dependedTask.StartDate - Task.StartDate;
+
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newStart.AddDays(Lag), newStart.AddDays(Lag + dependedTask.Duration - 1), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newStart, newStart.AddDays(dependedTask.Duration - 1));
@@ -808,6 +809,7 @@ namespace C__Project_1
                     else if (Type == "FF")
                     {
                         newSpan = dependedTask.EndDate - Task.EndDate;
+
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newEnd.AddDays(Lag - dependedTask.Duration + 1), newEnd.AddDays(Lag), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newEnd.AddDays(-dependedTask.Duration + 1), newEnd);
@@ -815,6 +817,7 @@ namespace C__Project_1
                     else if (Type == "FS")
                     {
                         newSpan = dependedTask.StartDate - Task.EndDate;
+
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days - 1 != Lag && Lag != 0))
                             SetTimeline(depended.Key, newEnd.AddDays(1 + Lag), newEnd.AddDays(1 + Lag + dependedTask.Duration - 1), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newEnd.AddDays(1), newEnd.AddDays(1 + dependedTask.Duration - 1));
@@ -822,6 +825,7 @@ namespace C__Project_1
                     else if (Type == "SF")
                     {
                         newSpan = dependedTask.EndDate - Task.StartDate;
+
                         if (!AlreadySettingTimeline(depended.Key) || (newSpan.Days != Lag && Lag != 0))
                             SetTimeline(depended.Key, newStart.AddDays(Lag - dependedTask.Duration + 1), newStart.AddDays(Lag), TaskName);
                         else if (Lag == 0) SetTimeline(depended.Key, newStart.AddDays(-dependedTask.Duration + 1), newStart);
@@ -1085,7 +1089,7 @@ namespace C__Project_1
                 return;
             }
 
-            if (Status == "In progress" && Dependencies.ContainsKey(TaskName)) 
+            if (Status == "In progress" && Dependencies.ContainsKey(TaskName))
             {
                 foreach (KeyValuePair<string, TypeLag> depending in Dependencies[TaskName].DependingTasks)
                 {
@@ -1103,12 +1107,12 @@ namespace C__Project_1
 
                         if (Lag >= 0)
                         {
-                            if(Type == "SS" && DependingTask.Status == "Not start")
+                            if (Type == "SS" && DependingTask.Status == "Not start")
                             {
                                 PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
-                            else if(Type == "FS" && DependingTask.Status != "Complete")
+                            else if (Type == "FS" && DependingTask.Status != "Complete")
                             {
                                 PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
@@ -1148,12 +1152,12 @@ namespace C__Project_1
 
                         if (Lag >= 0)
                         {
-                            if((Type == "SS" || Type == "SF") && DependingTask.Status == "Not start")
+                            if ((Type == "SS" || Type == "SF") && DependingTask.Status == "Not start")
                             {
                                 PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
                             }
-                            else if((Type == "FF" || Type == "FS") && DependingTask.Status != "Complete")
+                            else if ((Type == "FF" || Type == "FS") && DependingTask.Status != "Complete")
                             {
                                 PrintStatusError(TaskName, depending.Key, Status, Type, Lag);
                                 return;
@@ -1200,21 +1204,22 @@ namespace C__Project_1
             Print($"Cannot set the status of {TaskName} to {Status} because of dependency {DependingTaskName} -> {TaskName} type {Type}{Lag}!\n");
             Print($"Depending task {DependingTaskName} status: {DependingTask.Status}\n");
 
-            if(PrintCurrentDate) Print($"Current Date: {CurrentDate.ToString("MM/dd/yyyy")}\n");
+            if (PrintCurrentDate) Print($"Current Date: {CurrentDate.ToString("MM/dd/yyyy")}\n");
 
-            if(DependingTaskDate == "Start")
+            if (DependingTaskDate == "Start")
             {
                 Print($"DependingTask {DependingTaskName} StartDate: {DependingTask.StartDate.ToString("MM/dd/yyyy")}\n");
                 Print($"DependingTask {DependingTaskName} StartDate with Lag {Lag}: {DependingTask.StartDate.AddDays(Lag).ToString("MM/dd/yyyy")}\n");
             }
-            else if(DependingTaskDate == "End")
+            else if (DependingTaskDate == "End")
             {
                 Print($"DependingTask {DependingTaskName} EndDate: {DependingTask.EndDate.ToString("MM/dd/yyyy")}\n");
-                if(Type == "FF") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag).ToString("MM/dd/yyyy")}\n");
-                else if(Type == "FS") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag).ToString("MM/dd/yyyy")}\n");
+
+                if (Type == "FF") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(Lag).ToString("MM/dd/yyyy")}\n");
+                else if (Type == "FS") Print($"DependingTask {DependingTaskName} EndDate with Lag {Lag}: {DependingTask.EndDate.AddDays(1 + Lag).ToString("MM/dd/yyyy")}\n");
             }
 
-            if(TaskDate == "Start") Print($"Task {TaskName} StartDate: {Task.StartDate.ToString("MM/dd/yyyy")}\n");
+            if (TaskDate == "Start") Print($"Task {TaskName} StartDate: {Task.StartDate.ToString("MM/dd/yyyy")}\n");
             else if (TaskDate == "End") Print($"Task {TaskName} EndDate: {Task.EndDate.ToString("MM/dd/yyyy")}\n");
         }
 
@@ -1409,7 +1414,7 @@ namespace C__Project_1
                         if (CurrentDate >= Task.StartDate) PrintWordWithEmptySpace($"{WorkResourceCost}{Resources.Currency}", 11);
                         else PrintWordWithEmptySpace(" ", 11);
                     }
-                    else if(Resources.WorkResourceList[resource.Key].Accrue == "End")
+                    else if (Resources.WorkResourceList[resource.Key].Accrue == "End")
                     {
                         float WorkResourceCost = CalculateCostEndAccrueOfWorkResource(resource.Key, TaskName, Resources);
                         PrintWordWithEmptySpace("End", 10);
@@ -1417,7 +1422,7 @@ namespace C__Project_1
                         if (CurrentDate >= Task.EndDate) PrintWordWithEmptySpace($"{WorkResourceCost}{Resources.Currency}", 11);
                         else PrintWordWithEmptySpace(" ", 11);
                     }
-                    else if(Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
+                    else if (Resources.WorkResourceList[resource.Key].Accrue == "Prorated")
                     {
                         float WorkResourceCost = CalculateCostProratedAccrueOfWorkResource(resource.Key, TaskName, Resources);
                         PrintWordWithEmptySpace("Prorated", 10);
@@ -1432,7 +1437,7 @@ namespace C__Project_1
                     PrintWordWithEmptySpace(" ", 10);
                     PrintWordWithEmptySpace(CalculateTotalCostOfaResourceInTask(resource.Key, TaskName, Resources).ToString(), 11);
                 }
-                
+
                 Print("\n");
             }
         }
@@ -1526,7 +1531,7 @@ namespace C__Project_1
             return cost;
         }
 
-        private float CalculateCostEndAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources) 
+        private float CalculateCostEndAccrueOfWorkResource(string ResourceName, string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1574,7 +1579,7 @@ namespace C__Project_1
             return TotalCost;
         }
 
-        private float CalculateTotalCostOfaResourceInTask(string ResourceName, string TaskName, ResourceManagement Resources) 
+        private float CalculateTotalCostOfaResourceInTask(string ResourceName, string TaskName, ResourceManagement Resources)
         {
             Task? Task = FindTaskNode(TaskName);
             if (Task == null)
@@ -1588,7 +1593,7 @@ namespace C__Project_1
                 return 0;
             }
 
-            float cost = 0; 
+            float cost = 0;
 
             if (Resources.CheckIfWorkResourceExists(ResourceName))
             {
@@ -1803,7 +1808,7 @@ namespace C__Project_1
             string space = "";
             int NumOfSpace = MaximumEmptySpace >= word.Length ? MaximumEmptySpace - word.Length : 0;
 
-            for(int i = 1; i <= NumOfSpace; ++i)
+            for (int i = 1; i <= NumOfSpace; ++i)
             {
                 space += " ";
             }
@@ -1847,11 +1852,7 @@ namespace C__Project_1
         public Vertex Start = new Vertex("Start");
         public Vertex End = new Vertex("End");
 
-        public PDMDiGraph()
-        {
-            Start.EarliestStart = -1;
-            Start.EarliestEnd = -1;
-        }
+        public PDMDiGraph() { }
 
         public void ChangeVertexName(string vertex, string newVertex)
         {
@@ -1961,10 +1962,20 @@ namespace C__Project_1
 
             BackwardPass(TopoSorted2);
 
+            ++Start.EarliestStart;
+            ++Start.EarliestEnd;
+            ++Start.LatestStart;
+            ++Start.LatestEnd;
+
             --End.EarliestStart;
             --End.EarliestEnd;
             --End.LatestStart;
             --End.LatestEnd;
+
+            Start.ES = Start.ES.AddDays(1);
+            Start.EF = Start.EF.AddDays(1);
+            Start.LS = Start.LS.AddDays(1);
+            Start.LF = Start.LF.AddDays(1);
 
             End.ES = End.ES.AddDays(-1);
             End.EF = End.EF.AddDays(-1);
@@ -2289,9 +2300,9 @@ namespace C__Project_1
         public string TaskName;
 
         public DateTime InitialStartDate;
-        public DateTime StartDate; //
+        public DateTime StartDate; 
         public DateTime InitialFinishDate;
-        public DateTime FinishDate; //
+        public DateTime FinishDate; 
         public int Duration;
 
         public string Priority = "";
@@ -2371,7 +2382,7 @@ namespace C__Project_1
             Print("Array of tasks after adding subtasks without dependencies: ");
             foreach (string task in array)
             {
-                if(!TopoSort.Contains(task))
+                if (!TopoSort.Contains(task))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Print($"{task} ");
@@ -2390,7 +2401,7 @@ namespace C__Project_1
                     Print($"Tasks in array after adding task {task}: ");
                     foreach (string taskArray in array)
                     {
-                        if(taskArray == task)
+                        if (taskArray == task)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Print($"{taskArray} ");
@@ -2472,11 +2483,7 @@ namespace C__Project_1
                 if (Graph.CheckIfVertexExists(task.Key))
                 {
                     task.Value.TotalFloat = Graph.vertices[task.Key].TotalFloat;
-
-                    if (task.Value.TotalFloat == 0)
-                    {
-                        task.Value.Critical = true;
-                    }
+                    if (task.Value.TotalFloat == 0) task.Value.Critical = true;
                 }
             }
         }
@@ -2485,7 +2492,7 @@ namespace C__Project_1
         {
             bool build = true;
 
-            if(Tree.TaskNameandIDDic.Count == 1)
+            if (Tree.TaskNameandIDDic.Count == 1)
             {
                 Console.Write("Cannot create Gantt Chart because no task exists!\n");
                 return false;
@@ -2710,7 +2717,7 @@ namespace C__Project_1
             {
                 string ID = Tree.GetTaskID(array[i]);
 
-                if (ID.Length > TaskID.Length && TaskID == ID.Substring(0, TaskID.Length) && !repeat) 
+                if (ID.Length > TaskID.Length && TaskID == ID.Substring(0, TaskID.Length) && !repeat)
                 {
                     indices.Add(i + plus);
                     ++plus;
@@ -2941,9 +2948,9 @@ namespace C__Project_1
 
         public void PrintDetailedInfoOfAllTasks()
         {
-            PrintTasksOrderWithBasicInfo();Print("\n\n");
+            PrintTasksOrderWithBasicInfo(); Print("\n\n");
 
-            foreach(KeyValuePair<string, GanttChartBar> Task in TaskBars)
+            foreach (KeyValuePair<string, GanttChartBar> Task in TaskBars)
             {
                 PrintDependencyInfoOfTask(Task.Key); Print("\n\n");
             }
@@ -2985,9 +2992,9 @@ namespace C__Project_1
             GanttChartBar TaskBar = TaskBars[TaskName];
             int bonusLength = LowestBarLevel - Tree.GetTaskID(TaskName).Length;
 
-            if(Graph.vertices.ContainsKey(TaskName))
+            if (Graph.vertices.ContainsKey(TaskName))
             {
-                if(TaskBar.Critical) Console.ForegroundColor = ConsoleColor.Red;
+                if (TaskBar.Critical) Console.ForegroundColor = ConsoleColor.Red;
                 else Console.ForegroundColor = ConsoleColor.Blue;
             }
 
@@ -3072,7 +3079,7 @@ namespace C__Project_1
             GanttChartBar TaskBar = TaskBars[TaskName];
             string ResourceString = "";
 
-            foreach(KeyValuePair<string, int> resource in TaskBar.ResourceAndCapacity)
+            foreach (KeyValuePair<string, int> resource in TaskBar.ResourceAndCapacity)
             {
                 ResourceString += resource.Key + "-" + resource.Value + " ";
             }
@@ -3123,6 +3130,370 @@ namespace C__Project_1
         }
     }
 
+    class TaskInfoForResourceLeveling
+    {
+        public string TaskName;
+        public DateTime EarliestStart;
+        public int Duration;
+        public int TotalFloat;
+        public Dictionary<string, int> WorkResourcesAndCapacity = new Dictionary<string, int>();
+
+        public TaskInfoForResourceLeveling(string name)
+        {
+            TaskName = name;
+        }
+    }
+
+    class ResourceLevelingSolving
+    {
+        private bool CanSolveProblem = true;
+        private ResourceManagement? Resources;
+        public Dictionary<string, TaskInfoForResourceLeveling> TasksInfo = new Dictionary<string, TaskInfoForResourceLeveling>();
+        private List<string> TasksWithIndices = new List<string>();
+        private DateTime ProjectStartDate;
+        private DateTime ProjectFinishDate;
+
+        public ResourceLevelingSolving(GanttChart Chart, ResourceManagement Resources)
+        {
+            if(!CanSolveResourceLevelingProblem(Chart, Resources)) CanSolveProblem = false;
+            else
+            {
+                ProjectStartDate = Chart.Graph.Start.ES;
+                ProjectFinishDate = Chart.Graph.End.EF;
+                this.Resources = Resources;
+                AddTasksInfoAndList(Chart, Resources);
+            }
+        }
+
+        public string ReturnSolution()
+        {
+            if(!CanSolveProblem || Resources == null)
+            {
+                PrintWarning();
+                return "";
+            }
+
+            List<string> Population = CreatePopulation(10);
+            return GeneticAlgorithm(Population);
+        }
+
+        private string GeneticAlgorithm(List<string> Population)
+        {
+            Dictionary<string, int> PopulationWithFitness = new Dictionary<string, int>();
+            int time = 0;
+
+            do
+            {
+                PopulationWithFitness = PopulationWithFitnessValue(Population);
+                List<string> Population2 = new List<string>();
+
+                for(int i = 1; i <= Population.Count; ++i)
+                {
+                    List<string> TwoParents = ChosenTwoParents(PopulationWithFitness);
+
+                    string child = Reproduce(TwoParents[0], TwoParents[1]);
+
+                    Random random = new Random();
+                    if (random.Next(1, 101) <= 3) child = Mutate(child);
+
+                    Population2.Add(child);
+                }
+
+                Population = Population2;
+
+            } while (!(IsSomeIndividualFitEnoughInPopulation(PopulationWithFitness)) && time <= 100000);
+
+            return BestIndividualInPopulation(PopulationWithFitness);
+        }
+
+        private string Reproduce(string Parent1, string Parent2)
+        {
+            Random random = new Random();
+            int cutLength = random.Next(1, Parent1.Length + 1);
+            return Parent1.Substring(0, cutLength) + Parent2.Substring(cutLength);
+        }
+
+        private Dictionary<string, int> PopulationWithFitnessValue(List<string> Population)
+        {
+            Dictionary<string, int> Weights = new Dictionary<string, int>();
+
+            foreach(string Citizen in Population)
+            {
+                Weights.Add(Citizen, CalculateFitness(Citizen));
+            }
+
+            return Weights;
+        }
+
+        private List<string> ChosenTwoParents(Dictionary<string, int> PopulationWithFitness)
+        {
+            List<string> ChosenParents = new List<string>();
+            Dictionary<string, int> PopulationWithPercentageFitness = new Dictionary<string, int>();
+            int TotalFitness = 0;
+
+            foreach(KeyValuePair<string, int> Citizen in PopulationWithFitness)
+            {
+                TotalFitness += Citizen.Value;
+            }
+
+            if(TotalFitness == 0)
+            {
+                ChosenParents.Add(PopulationWithFitness.ElementAt(0).Key);
+                ChosenParents.Add(PopulationWithFitness.ElementAt(1).Key);
+                return ChosenParents;
+            }
+
+            foreach (KeyValuePair<string, int> Citizen in PopulationWithFitness)
+            {
+                PopulationWithPercentageFitness.Add(Citizen.Key, 100 - (Citizen.Value / TotalFitness) * 100);
+            }
+
+            Random random = new Random();
+
+            while(ChosenParents.Count < 2)
+            {
+                bool Enough = false;
+
+                foreach(KeyValuePair<string, int> Citizen in PopulationWithPercentageFitness)
+                {
+                    if(random.Next(1, 101) <= Citizen.Value) ChosenParents.Add(Citizen.Key);
+
+                    if(ChosenParents.Count == 2)
+                    {
+                        Enough = true;
+                        break;
+                    }
+                }
+
+                if (Enough) break;
+                else ChosenParents = new List<string>();
+            }
+
+            return ChosenParents;
+        }
+
+        private string Mutate(string child, int MutationRate = 5)
+        {
+            Random random = new Random();
+            string mutateChild = "";
+
+            for(int i = 0; i < child.Length; ++i)
+            {
+                if (TasksInfo[TasksWithIndices[i]].TotalFloat != 0 && random.Next(1, 101) <= MutationRate) mutateChild += RandomDelayForTask(int.Parse(child[i].ToString()));
+                else mutateChild += child[i];
+            }
+
+            return mutateChild;
+        }
+
+        private string BestIndividualInPopulation(Dictionary<string, int> PopulationWithFitness)
+        {
+            string chosen = "";
+            int min = int.MaxValue;
+
+            foreach(KeyValuePair<string, int> Citizen in PopulationWithFitness)
+            {
+                if(Citizen.Value < min)
+                {
+                    chosen = Citizen.Key;
+                    min = Citizen.Value;
+                }
+            }
+
+            return chosen;
+        }
+
+        private bool IsSomeIndividualFitEnoughInPopulation(Dictionary<string, int> PopulationWithFitness)
+        {
+            int TotalFitness = 0;
+
+            foreach (KeyValuePair<string, int> Citizen in PopulationWithFitness)
+            {
+                TotalFitness += Citizen.Value;
+            }
+
+            if(TotalFitness <= PopulationWithFitness.Count) return true;
+            else return false;
+        }
+
+        private int CalculateFitness(string StringOfDelays)
+        {
+            if (Resources == null) return 0;
+            int value = 0;
+
+            Dictionary<string, Dictionary<string, int>> TimelineWithResources = TimelineOfProject();
+            AddResourcesToTimeline(StringOfDelays, TimelineWithResources);
+
+            foreach(KeyValuePair<string, Dictionary<string, int>> day in TimelineWithResources)
+            {
+                foreach(KeyValuePair<string, int> resource in day.Value)
+                {
+                    if(resource.Value > Resources.WorkResourceList[resource.Key].AvailableCapacity)
+                    {
+                        ++value;
+                        break;
+                    }
+                }
+            }
+
+            return value;
+        }
+
+        private void AddResourcesToTimeline(string StringOfDelays, Dictionary<string, Dictionary<string, int>> Timeline)
+        {
+            for(int i = 0; i < StringOfDelays.Length; ++i)
+            {
+                DateTime DelayStartDate = TasksInfo[TasksWithIndices[i]].EarliestStart.AddDays(int.Parse(StringOfDelays[i].ToString()));
+                DateTime DelayFinishDate = DelayStartDate.AddDays(TasksInfo[TasksWithIndices[i]].Duration - 1);
+
+                for(int span = 0; DelayStartDate.AddDays(span) <= DelayFinishDate; ++span)
+                {
+                    string StringDelayStartDate = DelayStartDate.AddDays(span).ToString("MM/dd/yyyy");
+
+                    foreach(KeyValuePair<string, int> resource in TasksInfo[TasksWithIndices[i]].WorkResourcesAndCapacity)
+                    {
+                        if (!Timeline[StringDelayStartDate].ContainsKey(resource.Key)) Timeline[StringDelayStartDate].Add(resource.Key, resource.Value);
+                        else Timeline[StringDelayStartDate][resource.Key] += resource.Value;
+                    }
+                }
+            }
+        }
+
+        private Dictionary<string, Dictionary<string, int>> TimelineOfProject() //ToString("MM/dd/yyyy")
+        {
+            Dictionary<string, Dictionary<string, int>> timeline = new Dictionary<string, Dictionary<string, int>>();
+
+            for (int days = 0; ProjectStartDate.AddDays(days) <= ProjectFinishDate; ++days)
+            {
+                timeline.Add(ProjectStartDate.AddDays(days).ToString("MM/dd/yyyy"), new Dictionary<string, int>());
+            }
+
+            return timeline;
+        }
+
+        private List<string> CreatePopulation(int size)
+        {
+            List<string> population = new List<string>();
+            string ZeroDelays = "";
+
+            for(int i = 1; i <= TasksWithIndices.Count; ++i)
+            {
+                ZeroDelays += "0";
+            }
+            
+            population.Add(ZeroDelays);
+
+            for(int i = 1; i <= size; ++i)
+            {
+                population.Add(RandomStringOfDelays());
+            }
+
+            return population;
+        }
+
+        private string RandomStringOfDelays()
+        {
+            string str = "";
+
+            foreach(KeyValuePair<string, TaskInfoForResourceLeveling> TaskInfo in TasksInfo)
+            {
+                str += RandomDelayForTask(TaskInfo.Value.TotalFloat);
+            }
+
+            return str;
+        }
+
+        private string RandomDelayForTask(int TotalFloat)
+        {
+            if (TotalFloat == 0) return "0";
+            else
+            {
+                Random random = new Random();
+                int Delay = random.Next(0, TotalFloat + 1);
+                return Delay.ToString();
+            }
+        }
+
+        private bool CanSolveResourceLevelingProblem(GanttChart Chart, ResourceManagement Resources)
+        {
+            if (Resources.WorkResourceList.Count == 0) return false;
+            else if (Chart.Graph.vertices.Count < 3) return false;
+            else if (!CheckIfEveryTaskHasWorkResources(Chart, Resources)) return false;
+            else return true;
+        }
+
+        private bool CheckIfEveryTaskHasWorkResources(GanttChart Chart, ResourceManagement Resources)
+        {
+            bool check = true;
+
+            foreach (KeyValuePair<string, GanttChartBar> TaskBar in Chart.TaskBars)
+            {
+                if (Chart.Graph.CheckIfVertexExists(TaskBar.Key) && !CheckIfTaskHasWorkResources(TaskBar.Key, Chart, Resources))
+                {
+                    check = false;
+                    break;
+                }
+            }
+
+            return check;
+        }
+
+        private bool CheckIfTaskHasWorkResources(string TaskName, GanttChart Chart, ResourceManagement Resources)
+        {
+            bool check = false;
+
+            foreach (KeyValuePair<string, int> resource in Chart.TaskBars[TaskName].ResourceAndCapacity)
+            {
+                if (Resources.CheckIfWorkResourceExists(resource.Key))
+                {
+                    check = true;
+                    break;
+                }
+            }
+
+            return check;
+        }
+        
+        private void AddTasksInfoAndList(GanttChart Chart, ResourceManagement Resources)
+        {
+            foreach (KeyValuePair<string, GanttChartBar> TaskBar in Chart.TaskBars)
+            {
+                if (Chart.Graph.CheckIfVertexExists(TaskBar.Key))
+                {
+                    string TaskName = TaskBar.Key;
+
+                    TasksInfo.Add(TaskName, new TaskInfoForResourceLeveling(TaskName));
+                    TasksWithIndices.Add(TaskName);
+
+                    TasksInfo[TaskName].EarliestStart = TaskBar.Value.StartDate;
+                    TasksInfo[TaskName].Duration = TaskBar.Value.Duration;
+                    TasksInfo[TaskName].TotalFloat = TaskBar.Value.TotalFloat;
+
+                    foreach (KeyValuePair<string, int> resource in TaskBar.Value.ResourceAndCapacity)
+                    {
+                        if (Resources.CheckIfWorkResourceExists(resource.Key))
+                        {
+                            TasksInfo[TaskName].WorkResourcesAndCapacity.Add(resource.Key, resource.Value);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void PrintWarning()
+        {
+            Print("Please check if:\n");
+            Print(" +There is at least one work resource in Resource Management\n");
+            Print(" +PDM graph has at least three tasks\n");
+            Print(" +Every task in PDM graph has at least one work resource\n");
+        }
+
+        private void Print(string text)
+        {
+            Console.Write(text);
+        }
+    }
+
     class ProjectManagement
     {
         public TreeOfTasks ProjectTree;
@@ -3147,30 +3518,34 @@ namespace C__Project_1
             if (GanttChart.CanBuildGanttChart(ProjectTree))
             {
                 ProjectGanttChart = new GanttChart(ProjectTree);
-                if(ProjectGanttChart.TasksWithOrder.Count == 0) Print("Create/Update Gantt Chart failed!\n");
+                if (ProjectGanttChart.TasksWithOrder.Count == 0) Print("Create/Update Gantt Chart failed!\n");
             }
             else Print("Create/Update Gantt Chart failed!\n");
         }
 
         public void AddTask(string TaskName)
         {
-            ProjectTree.AddTaskToRootTask(TaskName);
+            if (TaskName != "Start" && TaskName != "End") ProjectTree.AddTaskToRootTask(TaskName);
+            else Print("Cannot add task with name Start or End!\n");
         }
 
         public void AddSubtaskToTask(string SubtaskName, string TaskName)
         {
-            ProjectTree.AddSubtaskToTask(SubtaskName, TaskName);
+            if(SubtaskName != "Start" && SubtaskName != "End") ProjectTree.AddSubtaskToTask(SubtaskName, TaskName); 
+            else Print("Cannot add subtask with name Start or End!\n");
         }
 
         public void ChangeProjectName(string CurrentProjectName, string NewProjectName)
         {
-            if (CurrentProjectName == ProjectTree.RootTask.TaskName) ProjectTree.ChangeTaskName(CurrentProjectName, NewProjectName);
+            if (CurrentProjectName == ProjectTree.RootTask.TaskName && NewProjectName != "Start" && NewProjectName != "End") ProjectTree.ChangeTaskName(CurrentProjectName, NewProjectName);
+            else if (NewProjectName == "Start" || NewProjectName == "End") Print("Cannot change name to Start or End!\n");
             else Print($"Project name {CurrentProjectName} not found!\n");
         }
 
         public void ChangeTaskName(string CurrentTaskName, string NewTaskName)
         {
-            if (CurrentTaskName != ProjectTree.RootTask.TaskName) ProjectTree.ChangeTaskName(CurrentTaskName, NewTaskName);
+            if (CurrentTaskName != ProjectTree.RootTask.TaskName && NewTaskName != "Start" && NewTaskName != "End") ProjectTree.ChangeTaskName(CurrentTaskName, NewTaskName);
+            else if (NewTaskName == "Start" || NewTaskName == "End") Print($"Cannot change name to Start or End!\n");
             else Print("Cannot change Project's name!\n");
         }
 
@@ -3246,6 +3621,13 @@ namespace C__Project_1
         public void AddCapacityToResourceOfTask(string ResourceName, string TaskName, int Capacity)
         {
             ProjectTree.AddCapacityToResourceOfTask(ResourceName, TaskName, Capacity);
+
+            if(Resources.CheckIfWorkResourceExists(ResourceName))
+            {
+                if (Capacity <= Resources.WorkResourceList[ResourceName].AvailableCapacity) ProjectTree.AddCapacityToResourceOfTask(ResourceName, TaskName, Capacity);
+                else Print($"Cannot add the new capacity {Capacity} because it is greater than the available capacity {Resources.WorkResourceList[ResourceName].AvailableCapacity}!\n");
+            }
+            else ProjectTree.AddCapacityToResourceOfTask(ResourceName, TaskName, Capacity);
         }
 
         public void DeleteResourceOfTask(string ResourceName, string TaskName)
@@ -3469,7 +3851,10 @@ namespace C__Project_1
 
             GanttChart Chart = new GanttChart(Tree);
             //Chart.PrintTasksOrderWithBasicInfo();
-            Chart.PrintDetailedInfoOfAllTasks();
+            //Chart.PrintDetailedInfoOfAllTasks();
+
+            //Print($"Start of project: {Chart.Graph.Start.ES}\n");
+            //Print($"End of project: {Chart.Graph.End.LS}\n");
         }
 
         static void Print(string text)
